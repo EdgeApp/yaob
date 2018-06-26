@@ -1,0 +1,70 @@
+{
+  "name": "yaob",
+  "version": "0.1.0",
+  "description": "Proxies an object-oriented API across a messaging layer",
+  "license": "MIT",
+  "files": [
+    "CHANGELOG.md",
+    "README.md",
+    "lib/*",
+    "package.json"
+  ],
+  "main": "lib/yaob.js",
+  "module": "lib/yaob.mjs",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Airbitz/yaob.git"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "build:test": "rollup -c rollup.config.test.js",
+    "precommit": "lint-staged && flow && npm test && npm run build",
+    "flow": "flow",
+    "format": "import-sort -l --write '*.js' 'src/**/*.js' 'test/**/*.js';prettier-eslint --write '*.js' 'src/**/*.js' 'test/**/*.js'",
+    "lint": "eslint '*.js' 'src/**/*.js' 'test/**/*.js'",
+    "prepare": "npm run build",
+    "pretest": "npm run build:test",
+    "test": "mocha --require source-map-support/register build/tests.js"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-eslint": "^8.2.5",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-es2015-rollup": "^3.0.0",
+    "babel-preset-flow": "^6.23.0",
+    "chai": "^4.1.2",
+    "eslint": "^5.0.1",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-flowtype": "^2.49.3",
+    "eslint-plugin-import": "^2.13.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.8.0",
+    "eslint-plugin-standard": "^3.1.0",
+    "flow-bin": "^0.62.0",
+    "husky": "^0.14.3",
+    "import-sort-cli": "^5.0.0",
+    "import-sort-parser-babylon": "^5.0.0",
+    "import-sort-style-module": "^5.0.0",
+    "lint-staged": "^7.2.0",
+    "mocha": "^5.2.0",
+    "prettier-eslint-cli": "^4.7.1",
+    "redux": "^4.0.0",
+    "rollup": "^0.61.2",
+    "rollup-plugin-babel": "^3.0.5",
+    "rollup-plugin-flow-entry": "^0.2.0",
+    "source-map-support": "^0.5.6"
+  },
+  "importSort": {
+    ".js, .es": {
+      "parser": "babylon",
+      "style": "module"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint",
+      "import-sort --list-different",
+      "prettier-eslint --list-different"
+    ]
+  }
+}
