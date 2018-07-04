@@ -5,9 +5,10 @@
   "license": "MIT",
   "files": [
     "CHANGELOG.md",
-    "README.md",
     "lib/*",
-    "package.json"
+    "package.json",
+    "README.md",
+    "src/*"
   ],
   "main": "lib/yaob.js",
   "module": "lib/yaob.mjs",
