@@ -23,7 +23,7 @@ export type ProxyClient = {
   root: Promise<any>,
 
   // The server has sent a message:
-  onMessage(message: ProxyUpdateMessage): mixed
+  handleMessage(message: ProxyUpdateMessage): mixed
 }
 
 /**
@@ -107,7 +107,7 @@ export function makeProxyClient (sendMessage: SendClientMessage): ProxyClient {
     /**
      * Handle an incoming message from the server.
      */
-    onMessage (message: ProxyUpdateMessage) {
+    handleMessage (message: ProxyUpdateMessage) {
       // Handle newly-created objects:
       if (message.creates) {
         // Pass 1: Create proxies for the new objects:

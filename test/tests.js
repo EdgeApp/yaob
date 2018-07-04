@@ -97,7 +97,7 @@ describe('end-to-end', function () {
     // Ping-pong messages between the client and the server:
     function sendClientMessage (message) {
       log('call')
-      server.onMessage(message)
+      server.handleMessage(message)
     }
 
     function sendServerMessage (message) {
@@ -111,7 +111,7 @@ describe('end-to-end', function () {
 
       if (!client) {
       } else {
-        client.onMessage(message)
+        client.handleMessage(message)
       }
     }
 

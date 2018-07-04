@@ -46,7 +46,7 @@ export type ProxyServer = {
   onUpdate(): mixed,
 
   // The client has sent a message:
-  onMessage(message: ProxyCallMessage): mixed
+  handleMessage(message: ProxyCallMessage): mixed
 }
 
 /**
@@ -227,7 +227,7 @@ export function makeProxyServer (
     /**
      * The client has sent us a message, so handle that.
      */
-    onMessage (message: ProxyCallMessage) {
+    handleMessage (message: ProxyCallMessage) {
       // Bogus messages:
       if (message.callId == null || message.proxyId == null) return
 

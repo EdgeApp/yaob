@@ -81,7 +81,7 @@ const server = makeProxyServer(
 )
 
 // If the worker gets a message, give it to the proxy server:
-onmessage = event => server.onMessage(event.data))
+onmessage = event => server.handleMessage(event.data))
 ```
 
 This is all the server side needs.
@@ -99,7 +99,7 @@ const worker = new WebWorker('./worker.js')
 const client = makeProxyClient(message => worker.postMessage(message))
 
 // If the worker sends us a message, forward it to the proxy client:
-worker.addEventListener('message', event => client.onMessage(event))
+worker.addEventListener('message', event => client.handleMessage(event))
 ```
 
 Now we can wait for the server side to send us the root object, which we can then use:
