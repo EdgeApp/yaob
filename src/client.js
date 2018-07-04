@@ -103,66 +103,67 @@ export function makeProxyClient (sendMessage: SendClientMessage): ProxyClient {
   let resolveRoot
   const root = new Promise(resolve => (resolveRoot = resolve))
 
-  /**
-   * Handle an incoming message from the server.
-   */
-  function onMessage (message: ProxyUpdateMessage) {
-    // Handle newly-created objects:
-    if (message.creates) {
-      // Pass 1: Create proxies for the new objects:
-      for (const { proxyId, methods, type } of message.creates) {
-        // TODO: Use Object.create to snag client-side methods
-        const proxy = {}
-        proxies[proxyId] = proxy
-        for (const method of methods) {
-          proxy[method] = makeMethod(proxyId, method, type)
+  return {
+    /**
+     * Handle an incoming message from the server.
+     */
+    onMessage (message: ProxyUpdateMessage) {
+      // Handle newly-created objects:
+      if (message.creates) {
+        // Pass 1: Create proxies for the new objects:
+        for (const { proxyId, methods, type } of message.creates) {
+          // TODO: Use Object.create to snag client-side methods
+          const proxy = {}
+          proxies[proxyId] = proxy
+          for (const method of methods) {
+            proxy[method] = makeMethod(proxyId, method, type)
+          }
+          proxy.on = (name, callback) =>
+            (proxy['on' + name[0].toUpperCase() + name.slice(1)] = callback)
         }
-        proxy.on = (name, callback) =>
-          (proxy['on' + name[0].toUpperCase() + name.slice(1)] = callback)
-      }
 
-      // Pass 2: Fill in the values:
-      for (const { proxyId, values } of message.creates) {
-        for (const name in values) {
-          proxies[proxyId][name] = restoreValue(values[name])
+        // Pass 2: Fill in the values:
+        for (const { proxyId, values } of message.creates) {
+          for (const name in values) {
+            proxies[proxyId][name] = restoreValue(values[name])
+          }
         }
       }
-    }
 
-    // Handle deleted objects:
-    if (message.deletes) {
-      for (const proxyId of message.deletes) {
-        delete proxies[proxyId]
+      // Handle deleted objects:
+      if (message.deletes) {
+        for (const proxyId of message.deletes) {
+          delete proxies[proxyId]
+        }
       }
-    }
 
-    // Handle updated objects:
-    if (message.updates) {
-      for (const { proxyId, name, value, overlay } of message.updates) {
-        const proxy = proxies[proxyId]
-        proxy[name] = applyOverlay(value, overlay)
+      // Handle updated objects:
+      if (message.updates) {
+        for (const { proxyId, name, value, overlay } of message.updates) {
+          const proxy = proxies[proxyId]
+          proxy[name] = applyOverlay(value, overlay)
 
-        // Fire the callback:
-        const callback =
-          proxy['on' + name[0].toUpperCase() + name.slice(1) + 'Changed']
-        if (callback) callback(proxy[name])
+          // Fire the callback:
+          const callback =
+            proxy['on' + name[0].toUpperCase() + name.slice(1) + 'Changed']
+          if (callback) callback(proxy[name])
+        }
       }
-    }
 
-    // Handle function returns:
-    if (message.return) {
-      const { callId, error, result } = message.return
-      if (error) pendingCalls[callId].reject(restoreError(error))
-      if (result) pendingCalls[callId].resolve(restoreValue(result))
-      delete pendingCalls[callId]
-    }
+      // Handle function returns:
+      if (message.return) {
+        const { callId, error, result } = message.return
+        if (error) pendingCalls[callId].reject(restoreError(error))
+        if (result) pendingCalls[callId].resolve(restoreValue(result))
+        delete pendingCalls[callId]
+      }
 
-    // Handle the root object:
-    if (message.root) {
-      resolveRoot(restoreValue(message.root))
-    }
+      // Handle the root object:
+      if (message.root) {
+        resolveRoot(restoreValue(message.root))
+      }
+    },
+
+    root
   }
-
-  const out = { root, onMessage }
-  return out
 }
