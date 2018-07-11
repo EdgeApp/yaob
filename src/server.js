@@ -8,7 +8,7 @@ import type {
   ProxyUpdateMessage,
   ProxyValue
 } from './protocol.js'
-import { DELETED_PROXY_ID } from './protocol.js'
+import { OVERLAY_DELETED_PROXY } from './protocol.js'
 
 let lastProxyId = 0
 
@@ -49,7 +49,7 @@ export type ProxyServer = {
  * It will be deleted on the client side during the next update.
  */
 export function deleteApi (object: Object): mixed {
-  object[PROXY_OBJECT_KEY].proxyId = DELETED_PROXY_ID
+  object[PROXY_OBJECT_KEY].proxyId = OVERLAY_DELETED_PROXY
 }
 
 /**
@@ -120,7 +120,7 @@ export function makeProxyServer (
     const overlay = makeOverlay(value, object => {
       const info: ProxyObjectInfo = object[PROXY_OBJECT_KEY]
       const { proxyId, type, methodNames, valueNames } = info
-      if (proxies[proxyId] || proxyId === DELETED_PROXY_ID) return
+      if (proxies[proxyId] || proxyId === OVERLAY_DELETED_PROXY) return
 
       // We have discovered a proxy we don't know about:
       const values = {}
@@ -160,7 +160,7 @@ export function makeProxyServer (
       const info: ProxyObjectInfo = object[PROXY_OBJECT_KEY]
 
       // Check for deleted proxies:
-      if (info.proxyId === DELETED_PROXY_ID) {
+      if (info.proxyId === OVERLAY_DELETED_PROXY) {
         delete proxies[proxyId]
         deletes.push(proxyId)
       }

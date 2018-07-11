@@ -1,6 +1,8 @@
 // @flow
 
-export const DELETED_PROXY_ID = 'x'
+export const OVERLAY_DELETED_PROXY = 'x'
+export const OVERLAY_ERROR = 'e'
+export const OVERLAY_UNDEFINED = 'u'
 
 /**
  * A pure JSON value type.

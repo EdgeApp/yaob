@@ -1,6 +1,10 @@
 // @flow
 
-import { DELETED_PROXY_ID } from './protocol'
+import {
+  OVERLAY_DELETED_PROXY,
+  OVERLAY_ERROR,
+  OVERLAY_UNDEFINED
+} from './protocol'
 import type {
   ProxyCallMessage,
   ProxyOverlay,
@@ -37,19 +41,20 @@ export function makeProxyClient (sendMessage: SendClientMessage): ProxyClient {
   } = {}
 
   function applyOverlay (value: any, overlay: ProxyOverlay): any {
-    // Proxies:
+    // Simple values:
     if (overlay === null) return value
-    if (overlay === DELETED_PROXY_ID) return null
-    if (overlay === 'e') {
+    if (overlay === OVERLAY_DELETED_PROXY) return null
+    if (overlay === OVERLAY_ERROR) {
       const out = new Error()
       out.name = value.name
       out.stack = value.stack
       out.message = value.message
       return out
     }
-    if (typeof overlay === 'string') {
-      return proxies[overlay]
-    }
+    if (overlay === OVERLAY_UNDEFINED) return void 0
+
+    // Proxies:
+    if (typeof overlay === 'string') return proxies[overlay]
 
     // Arrays:
     if (Array.isArray(overlay)) {
@@ -61,15 +66,13 @@ export function makeProxyClient (sendMessage: SendClientMessage): ProxyClient {
     }
 
     // Objects:
-    if (overlay !== null) {
-      const out = {}
-      for (const name in value) {
-        out[name] = overlay[name]
-          ? applyOverlay(value[name], overlay[name])
-          : value[name]
-      }
-      return out
+    const out = {}
+    for (const name in value) {
+      out[name] = overlay[name]
+        ? applyOverlay(value[name], overlay[name])
+        : value[name]
     }
+    return out
   }
 
   /**
