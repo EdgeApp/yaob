@@ -4,8 +4,7 @@ import { DELETED_PROXY_ID } from './protocol'
 import type {
   ProxyCallMessage,
   ProxyOverlay,
-  ProxyUpdateMessage,
-  ProxyValue
+  ProxyUpdateMessage
 } from './protocol.js'
 
 /**
@@ -74,17 +73,10 @@ export function makeProxyClient (sendMessage: SendClientMessage): ProxyClient {
   }
 
   /**
-   * Restores a value that was stripped using `stripValue`.
-   */
-  function restoreValue (value: ProxyValue) {
-    return applyOverlay(value.value, value.overlay)
-  }
-
-  /**
    * Creates a method for placement on a proxy object.
    */
   function makeMethod (proxyId, method, type) {
-    return (...args) => {
+    return (...params) => {
       if (!proxies[proxyId]) {
         return Promise.reject(
           new Error(`Calling method '${method}' on deleted object '${type}'`)
@@ -93,7 +85,7 @@ export function makeProxyClient (sendMessage: SendClientMessage): ProxyClient {
 
       // TODO: Overlay args?
       const callId = ++lastCallId
-      sendMessage({ proxyId, callId, method, args })
+      sendMessage({ proxyId, callId, method, params })
       return new Promise((resolve, reject) => {
         pendingCalls[callId] = { resolve, reject }
       })
@@ -123,9 +115,10 @@ export function makeProxyClient (sendMessage: SendClientMessage): ProxyClient {
         }
 
         // Pass 2: Fill in the values:
-        for (const { proxyId, values } of message.creates) {
+        for (const { proxyId, value, overlay } of message.creates) {
+          const values = applyOverlay(value, overlay)
           for (const name in values) {
-            proxies[proxyId][name] = restoreValue(values[name])
+            proxies[proxyId][name] = values[name]
           }
         }
       }
@@ -163,7 +156,8 @@ export function makeProxyClient (sendMessage: SendClientMessage): ProxyClient {
 
       // Handle the root object:
       if (message.root) {
-        resolveRoot(restoreValue(message.root))
+        const { overlay, value } = message.root
+        resolveRoot(applyOverlay(value, overlay))
       }
     },
 

@@ -130,15 +130,11 @@ export function makeProxyServer (
       proxies[proxyId] = { object, values }
 
       // We need to tell the client about this as well:
-      const splitValues = {}
-      for (const name of valueNames) {
-        splitValues[name] = splitValue(values[name], creates)
-      }
       creates.push({
         proxyId,
         type,
         methods: methodNames,
-        values: splitValues
+        ...splitValue(values, creates)
       })
     })
 
@@ -226,7 +222,7 @@ export function makeProxyServer (
       // Bogus messages:
       if (message.callId == null || message.proxyId == null) return
 
-      const { callId, proxyId, method, args } = message
+      const { callId, proxyId, method, params } = message
       try {
         // Find the method:
         if (!proxies[proxyId]) {
@@ -238,7 +234,7 @@ export function makeProxyServer (
         }
 
         // Call the method:
-        Promise.resolve(object[method].apply(object, args))
+        Promise.resolve(object[method].apply(object, params))
           .then(result => {
             const creates: Array<ProxyCreateEvent> = []
             sendUpdateNow({

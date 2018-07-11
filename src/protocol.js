@@ -31,8 +31,8 @@ export type ProxyOverlay =
  * It has any proxies filtered out into an overlay.
  */
 export type ProxyValue = {
-  value: JsonValue,
-  overlay: ProxyOverlay
+  overlay: ProxyOverlay,
+  value: JsonValue
 }
 
 /**
@@ -42,7 +42,7 @@ export type ProxyCallMessage = {
   callId: number,
   proxyId: string,
   method: string,
-  args: Array<JsonValue>
+  params: Array<JsonValue>
 }
 
 /**
@@ -52,7 +52,8 @@ export type ProxyCreateEvent = {
   proxyId: string,
   type: string,
   methods: Array<string>,
-  values: { [name: string]: ProxyValue }
+  overlay: ProxyOverlay,
+  value: JsonValue
 }
 
 /**
@@ -71,8 +72,8 @@ export type ProxyReturnEvent = {
 export type ProxyUpdateEvent = {
   proxyId: string,
   name: string,
-  value: JsonValue,
-  overlay: ProxyOverlay
+  overlay: ProxyOverlay,
+  value: JsonValue
 }
 
 /**
