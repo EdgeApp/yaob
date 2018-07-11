@@ -1,27 +1,8 @@
 // @flow
 
-import type { JsonValue, ProxyError, ProxyOverlay } from './protocol.js'
+import type { JsonValue, ProxyOverlay } from './protocol.js'
 
 export const PROXY_OBJECT_KEY = 'proxy key'
-
-/**
- * Turns an `Error` object into something that is compatible with either
- * JSON or the `WebWorker` structured clone algorithm.
- */
-export function jsonizeError (error: mixed): ProxyError {
-  if (error instanceof Error) {
-    return {
-      name: error.name,
-      message: error.message,
-      ...error // Snag any enumerable props
-    }
-  }
-
-  return {
-    name: 'TypeError',
-    message: 'Invalid error object ' + JSON.stringify(error)
-  }
-}
 
 /**
  * Searches through a JSON value, looking for API objects.
@@ -56,6 +37,9 @@ export function makeOverlay (
       return info.proxyId
     }
 
+    // If it's an Error object, return an "e":
+    if (value instanceof Error) return 'e'
+
     // Otherwise, recurse:
     let out = null
     for (const name in value) {
@@ -77,6 +61,10 @@ export function makeOverlay (
  */
 export function stripValue (value: any, overlay: ProxyOverlay): JsonValue {
   if (overlay === null) return value
+  if (overlay === 'e') {
+    const { name, message, stack } = value
+    return { name, message, stack, ...value }
+  }
   if (typeof overlay === 'string') return null
 
   // Arrays:

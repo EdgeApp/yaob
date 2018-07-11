@@ -3,7 +3,6 @@
 import { DELETED_PROXY_ID } from './protocol'
 import type {
   ProxyCallMessage,
-  ProxyError,
   ProxyOverlay,
   ProxyUpdateMessage,
   ProxyValue
@@ -38,17 +37,18 @@ export function makeProxyClient (sendMessage: SendClientMessage): ProxyClient {
     [callId: number]: { resolve: Function, reject: Function }
   } = {}
 
-  function restoreError (value: ProxyError): Error {
-    const out = new Error(value.message)
-    out.name = value.name
-    return out
-  }
-
   function applyOverlay (value: any, overlay: ProxyOverlay): any {
     // Proxies:
     if (overlay === null) return value
+    if (overlay === DELETED_PROXY_ID) return null
+    if (overlay === 'e') {
+      const out = new Error()
+      out.name = value.name
+      out.stack = value.stack
+      out.message = value.message
+      return out
+    }
     if (typeof overlay === 'string') {
-      if (overlay === DELETED_PROXY_ID) return null
       return proxies[overlay]
     }
 
@@ -152,9 +152,12 @@ export function makeProxyClient (sendMessage: SendClientMessage): ProxyClient {
 
       // Handle function returns:
       if (message.return) {
-        const { callId, error, result } = message.return
-        if (error) pendingCalls[callId].reject(restoreError(error))
-        if (result) pendingCalls[callId].resolve(restoreValue(result))
+        const { callId, fail, overlay, value } = message.return
+        const result = applyOverlay(value, overlay)
+
+        // Resolve the promise:
+        if (fail) pendingCalls[callId].reject(result)
+        else pendingCalls[callId].resolve(result)
         delete pendingCalls[callId]
       }
 

@@ -15,14 +15,6 @@ export type JsonValue =
   | true
 
 /**
- * The proxy converts `Error` objects to plain JSON data.
- */
-export type ProxyError = {
-  name: string,
-  message: string
-}
-
-/**
  * The bridge sends proxy instances as an overlay.
  * To reconstruct the original value with proxies in place,
  * replace each `number` in the overlay with the matching proxy instance,
@@ -68,8 +60,9 @@ export type ProxyCreateEvent = {
  */
 export type ProxyReturnEvent = {
   callId: number,
-  error?: ProxyError,
-  result?: ProxyValue
+  fail: boolean,
+  overlay: ProxyOverlay,
+  value: JsonValue
 }
 
 /**

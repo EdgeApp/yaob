@@ -1,11 +1,6 @@
 // @flow
 
-import {
-  PROXY_OBJECT_KEY,
-  jsonizeError,
-  makeOverlay,
-  stripValue
-} from './overlay.js'
+import { PROXY_OBJECT_KEY, makeOverlay, stripValue } from './overlay.js'
 import type {
   ProxyCallMessage,
   ProxyCreateEvent,
@@ -248,14 +243,22 @@ export function makeProxyServer (
             const creates: Array<ProxyCreateEvent> = []
             sendUpdateNow({
               creates,
-              return: { callId, result: splitValue(result, creates) }
+              return: { callId, fail: false, ...splitValue(result, creates) }
             })
           })
-          .catch(e =>
-            sendUpdateNow({ return: { callId, error: jsonizeError(e) } })
-          )
+          .catch(e => {
+            const creates: Array<ProxyCreateEvent> = []
+            sendUpdateNow({
+              creates,
+              return: { callId, fail: true, ...splitValue(e, creates) }
+            })
+          })
       } catch (e) {
-        sendUpdateNow({ return: { callId, error: jsonizeError(e) } })
+        const creates: Array<ProxyCreateEvent> = []
+        sendUpdateNow({
+          creates,
+          return: { callId, fail: true, ...splitValue(e, creates) }
+        })
       }
     }
   }
