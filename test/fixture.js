@@ -18,9 +18,11 @@ export type OnChange<name: string, Type> = (
 export type TestApi = {
   +count: number,
   +childList: Array<StaticChildApi | number>,
-  makeChild(): Promise<DynamicChildApi>,
-  killChild(): Promise<mixed>,
+
   addCount(steps: number): Promise<number>,
+  alwaysThrows(): Promise<mixed>,
+  killChild(): Promise<mixed>,
+  makeChild(): Promise<DynamicChildApi>,
 
   on: OnChange<'countChanged', number> &
     OnChange<'childListChanged', Array<StaticChildApi | number>>
@@ -64,12 +66,14 @@ export function makeTestApi (log: string => mixed = nop) {
       return childList
     },
 
-    async makeChild () {
-      log('makeChild')
-      if (dynamicChild == null) {
-        dynamicChild = makeDynamicChildApi(log)
-      }
-      return dynamicChild
+    async addCount (steps: number) {
+      log('addCount ' + steps)
+      count += steps
+      return count
+    },
+
+    async alwaysThrows () {
+      throw new TypeError('I will never be happy')
     },
 
     async killChild () {
@@ -80,10 +84,12 @@ export function makeTestApi (log: string => mixed = nop) {
       }
     },
 
-    async addCount (steps: number) {
-      log('addCount ' + steps)
-      count += steps
-      return count
+    async makeChild () {
+      log('makeChild')
+      if (dynamicChild == null) {
+        dynamicChild = makeDynamicChildApi(log)
+      }
+      return dynamicChild
     },
 
     // Make Flow happy:

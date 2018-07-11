@@ -132,6 +132,12 @@ describe('end-to-end', function () {
     expect(clientRoot.count).equals(2)
     log.assert(['call', 'addCount 2', 'update r u', 'countChanged 2'])
 
+    // Try catching an error:
+    const staticFail: any = await clientRoot.alwaysThrows().catch(e => e)
+    expect(staticFail).instanceof(Error)
+    expect(staticFail.message).equals('I will never be happy')
+    log.assert(['call', 'update r'])
+
     // Access the static child:
     const staticChild = clientRoot.childList[1]
     if (typeof staticChild.answer !== 'number') {
@@ -153,8 +159,11 @@ describe('end-to-end', function () {
 
     // Kill the sub-child:
     await clientRoot.killChild()
-    const childThrew = await dynamicChild.method().then(ok => false, e => true)
-    expect(childThrew).equals(true)
+    const dynamicFail: any = await dynamicChild.method().catch(e => e)
+    expect(dynamicFail).instanceof(Error)
+    expect(dynamicFail.message).equals(
+      "Calling method 'method' on deleted object 'DynamicChild'"
+    )
     log.assert(['call', 'killChild', 'update d r'])
   })
 })
