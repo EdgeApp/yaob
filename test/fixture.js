@@ -23,6 +23,7 @@ export type TestApi = {
   alwaysThrows(): Promise<mixed>,
   killChild(): Promise<mixed>,
   makeChild(): Promise<DynamicChildApi>,
+  syncMethod(multipler: number): number,
 
   on: OnChange<'countChanged', number> &
     OnChange<'childListChanged', Array<StaticChildApi | number>>
@@ -47,6 +48,15 @@ function makeDynamicChildApi (log: string => mixed) {
     }
   }
   return makeApi('DynamicChild', out)
+}
+
+// Client-side shim methods:
+export const shims = {
+  TestApi: {
+    syncMethod (multipler: number) {
+      return this.count * multipler
+    }
+  }
 }
 
 export function makeTestApi (log: string => mixed = nop) {
@@ -93,7 +103,9 @@ export function makeTestApi (log: string => mixed = nop) {
     },
 
     // Make Flow happy:
-    on (): any {}
+    on (): any {},
+
+    ...shims['TestApi']
   }
 
   return makeApi('TestApi', out)

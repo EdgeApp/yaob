@@ -6,7 +6,7 @@ import { describe, it } from 'mocha'
 import { makeApi, makeProxyClient, makeProxyServer } from '../src/index.js'
 import { PROXY_OBJECT_KEY, makeOverlay, stripValue } from '../src/overlay.js'
 import { makeAssertLog } from './assert-log.js'
-import { makeTestApi } from './fixture.js'
+import { makeTestApi, shims } from './fixture.js'
 
 function getProxyId (api: any): string {
   return api[PROXY_OBJECT_KEY].proxyId
@@ -116,7 +116,7 @@ describe('end-to-end', function () {
     }
 
     // Start the client and the server:
-    const client = makeProxyClient(sendClientMessage)
+    const client = makeProxyClient(sendClientMessage, shims)
     const server = makeProxyServer(serverRoot, sendServerMessage)
     log.assert(['update b c'])
 
@@ -131,6 +131,10 @@ describe('end-to-end', function () {
     await clientRoot.addCount(2)
     expect(clientRoot.count).equals(2)
     log.assert(['call', 'addCount 2', 'update r u', 'countChanged 2'])
+
+    // Client-side method call:
+    expect(clientRoot.syncMethod(1.5)).equals(3)
+    log.assert([])
 
     // Try catching an error:
     const staticFail: any = await clientRoot.alwaysThrows().catch(e => e)

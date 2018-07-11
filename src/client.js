@@ -31,7 +31,10 @@ export type ProxyClient = {
 /**
  * Creates the client side of an API proxy.
  */
-export function makeProxyClient (sendMessage: SendClientMessage): ProxyClient {
+export function makeProxyClient (
+  sendMessage: SendClientMessage,
+  shims?: Object = {}
+): ProxyClient {
   let lastCallId = 0
 
   // Proxy cache:
@@ -107,12 +110,19 @@ export function makeProxyClient (sendMessage: SendClientMessage): ProxyClient {
       if (message.creates) {
         // Pass 1: Create proxies for the new objects:
         for (const { proxyId, methods, type } of message.creates) {
-          // TODO: Use Object.create to snag client-side methods
           const proxy = {}
           proxies[proxyId] = proxy
+
           for (const method of methods) {
             proxy[method] = makeMethod(proxyId, method, type)
           }
+
+          if (shims[type]) {
+            for (const name in shims[type]) {
+              proxy[name] = shims[type][name]
+            }
+          }
+
           proxy.on = (name, callback) =>
             (proxy['on' + name[0].toUpperCase() + name.slice(1)] = callback)
         }
