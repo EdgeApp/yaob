@@ -110,7 +110,7 @@ export function makeProxyClient (
   let resolveRoot
   const root = new Promise(resolve => (resolveRoot = resolve))
 
-  return {
+  const out = {
     /**
      * Handle an incoming message from the server.
      */
@@ -183,10 +183,15 @@ export function makeProxyClient (
       // Handle the root object:
       if (message.root) {
         const { overlay, value } = message.root
-        resolveRoot(applyOverlay(value, overlay))
+        const root = applyOverlay(value, overlay)
+        const hack: any = out
+        hack.syncRoot = root
+        resolveRoot(root)
       }
     },
 
     root
   }
+
+  return out
 }
