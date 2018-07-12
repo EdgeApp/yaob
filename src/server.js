@@ -37,8 +37,11 @@ export type ProxyServerOptions = {
  * state might have changed (needing a value diff).
  */
 export type ProxyServer = {
+  // Send an event:
+  emit(api: Object, name: string, value: any): mixed,
+
   // Redux has changed, so check for new values:
-  onUpdate(): mixed,
+  update(): mixed,
 
   // The client has sent a message:
   handleMessage(message: ProxyCallMessage): mixed
@@ -196,11 +199,22 @@ export function makeProxyServer (
   sendUpdateNow({ creates, root: splitValue(rootApi, creates) })
 
   return {
+    emit (api: Object, name: string, value: any) {
+      if (!api[PROXY_OBJECT_KEY]) throw new TypeError('Not an API object')
+
+      const { proxyId } = api[PROXY_OBJECT_KEY]
+      const creates: Array<ProxyCreateEvent> = []
+      sendUpdateNow({
+        creates,
+        event: { proxyId, name, ...splitValue(value, creates) }
+      })
+    },
+
     /**
      * Something has changed in Redux,
      * so diff the proxies and update the client.
      */
-    onUpdate () {
+    update () {
       // These updates are expensive, so we throttle them:
       const now = Date.now()
       if (lastUpdate + throttleMs <= now) {

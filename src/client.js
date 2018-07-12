@@ -79,6 +79,15 @@ export function makeProxyClient (
   }
 
   /**
+   * Fires a callback on an object.
+   */
+  function callCallback (proxyId: string, name: string, value: mixed) {
+    const proxy = proxies[proxyId]
+    const callback = proxy['on' + name[0].toUpperCase() + name.slice(1)]
+    if (callback) callback(value)
+  }
+
+  /**
    * Creates a method for placement on a proxy object.
    */
   function makeMethod (proxyId, method, type) {
@@ -143,6 +152,12 @@ export function makeProxyClient (
         }
       }
 
+      // Handle server-side events:
+      if (message.event) {
+        const { proxyId, name, overlay, value } = message.event
+        callCallback(proxyId, name, applyOverlay(value, overlay))
+      }
+
       // Handle updated objects:
       if (message.updates) {
         for (const { proxyId, name, value, overlay } of message.updates) {
@@ -150,9 +165,7 @@ export function makeProxyClient (
           proxy[name] = applyOverlay(value, overlay)
 
           // Fire the callback:
-          const callback =
-            proxy['on' + name[0].toUpperCase() + name.slice(1) + 'Changed']
-          if (callback) callback(proxy[name])
+          callCallback(proxyId, name + 'Changed', proxy[name])
         }
       }
 

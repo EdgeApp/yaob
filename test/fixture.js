@@ -1,6 +1,7 @@
 // @flow
 
 import { deleteApi, makeApi } from '../src/index.js'
+import type { Event } from '../src/index.js'
 
 export type StaticChildApi = {
   +answer: number
@@ -9,11 +10,6 @@ export type StaticChildApi = {
 export type DynamicChildApi = {
   method(): Promise<string>
 }
-
-export type OnChange<name: string, Type> = (
-  name,
-  (value: Type) => mixed
-) => mixed
 
 export type TestApi = {
   +count: number,
@@ -25,8 +21,9 @@ export type TestApi = {
   makeChild(): Promise<DynamicChildApi>,
   syncMethod(multipler: number): number,
 
-  on: OnChange<'countChanged', number> &
-    OnChange<'childListChanged', Array<StaticChildApi | number>>
+  on: Event<'countChanged', number> &
+    Event<'childListChanged', Array<StaticChildApi | number>> &
+    Event<'event', string>
 }
 
 function nop () {}

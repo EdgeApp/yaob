@@ -105,6 +105,7 @@ describe('end-to-end', function () {
       if (message.root) string += ' b'
       if (message.creates && message.creates.length) string += ' c'
       if (message.deletes && message.deletes.length) string += ' d'
+      if (message.event) string += ' e'
       if (message.return) string += ' r'
       if (message.updates && message.updates.length) string += ' u'
       log(string)
@@ -169,5 +170,10 @@ describe('end-to-end', function () {
       "Calling method 'method' on deleted object 'DynamicChild'"
     )
     log.assert(['call', 'killChild', 'update d r'])
+
+    // Fire an event:
+    clientRoot.on('event', (message: string) => log('event ' + message))
+    server.emit(serverRoot, 'event', 'yo')
+    log.assert(['update e', 'event yo'])
   })
 })

@@ -11,3 +11,6 @@ export type {
 // Client API:
 export { makeProxyClient } from './client.js'
 export type { ProxyClient, SendClientMessage } from './client.js'
+
+// Flow helper:
+export type Event<name: string, Type> = (name, (value: Type) => mixed) => mixed

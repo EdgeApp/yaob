@@ -59,6 +59,16 @@ export type ProxyCreateEvent = {
 }
 
 /**
+ * The server sends this when it creates a new proxy object.
+ */
+export type ProxyEventEvent = {
+  proxyId: string,
+  name: string,
+  overlay: ProxyOverlay,
+  value: JsonValue
+}
+
+/**
  * The server sends this when a proxy method call has returned or thrown.
  */
 export type ProxyReturnEvent = {
@@ -85,6 +95,7 @@ export type ProxyUpdateEvent = {
 export type ProxyUpdateMessage = {
   creates?: Array<ProxyCreateEvent>,
   deletes?: Array<string>,
+  event?: ProxyEventEvent,
   return?: ProxyReturnEvent,
   root?: ProxyValue,
   updates?: Array<ProxyUpdateEvent>
