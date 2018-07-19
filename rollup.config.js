@@ -14,9 +14,8 @@ const babelOpts = {
 export default {
   input: 'src/index.js',
   output: [
-    { file: packageJson.main, format: 'cjs' },
-    { file: packageJson.module, format: 'es' }
+    { file: packageJson.main, format: 'cjs', sourcemap: true },
+    { file: packageJson.module, format: 'es', sourcemap: true }
   ],
-  plugins: [babel(babelOpts), flowEntry()],
-  sourcemap: true
+  plugins: [babel(babelOpts), flowEntry()]
 }
