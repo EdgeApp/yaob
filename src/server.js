@@ -100,7 +100,7 @@ export function makeProxyServer (
 
   // Throttling:
   let lastUpdate: number = 0
-  let updateTimeout: number | null = null
+  let updateTimeout: *
 
   // Proxy cache:
   const proxies: {
