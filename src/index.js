@@ -1,16 +1,38 @@
 // @flow
 
-// Server API:
-export { deleteApi, makeApi, makeProxyServer } from './server.js'
-export type {
-  ProxyServer,
-  ProxyServerOptions,
-  SendServerMessage
-} from './server.js'
+import { Bridge, type LocalBridgeOptions, makeLocalBridge } from './bridge.js'
+import { Bridgeable } from './bridgeable.js'
+import {
+  type CallbackRemover,
+  type EmitMethod,
+  type OnMethod,
+  addListener,
+  emitEvent,
+  emitMethod,
+  onMethod
+} from './events.js'
+import {
+  bridgifyClass,
+  bridgifyObject,
+  closeObject,
+  updateObject
+} from './magic.js'
+import type { BridgeOptions, SendMessage, SharedClasses } from './state.js'
 
-// Client API:
-export { makeProxyClient } from './client.js'
-export type { ProxyClient, SendClientMessage } from './client.js'
+// Defining bridgeable objects:
+export { Bridgeable, bridgifyClass, bridgifyObject }
 
-// Flow helper:
-export type Event<name: string, Type> = (name, (value: Type) => mixed) => mixed
+// Managing bridgeable objects:
+export {
+  addListener,
+  closeObject,
+  emitEvent,
+  emitMethod,
+  onMethod,
+  updateObject
+}
+export type { CallbackRemover, EmitMethod, OnMethod }
+
+// Building bridges:
+export { Bridge, makeLocalBridge }
+export type { BridgeOptions, LocalBridgeOptions, SendMessage, SharedClasses }

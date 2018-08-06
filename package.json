@@ -1,7 +1,7 @@
 {
   "name": "yaob",
   "version": "0.1.0",
-  "description": "Proxies an object-oriented API across a messaging layer",
+  "description": "Bridges an object-oriented API across a messaging layer",
   "license": "MIT",
   "files": [
     "CHANGELOG.md",

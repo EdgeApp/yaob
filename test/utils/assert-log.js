@@ -2,6 +2,11 @@
 
 import { expect } from 'chai'
 
+export type AssertLogOptions = {
+  ignoreOrder?: boolean,
+  verbose?: boolean
+}
+
 /**
  * Asserts that a correct sequence of events have occurred.
  * Used for testing callbacks.
@@ -11,18 +16,9 @@ import { expect } from 'chai'
  * with an array of expected log strings. If there is a mis-match,
  * `assert` will throw an exception.
  */
-export type AssertLog = {
-  assert(Array<string>): void
-} & ((...args: Array<any>) => void)
-
-function stringify (...args: Array<any>) {
-  return args
-    .map(arg => {
-      if (arg == null) return typeof arg
-      if (typeof arg !== 'object') return arg.toString()
-      return JSON.stringify(arg)
-    })
-    .join(' ')
+export type AssertLog = ((...args: Array<mixed>) => mixed) & {
+  assert(Array<string>): mixed,
+  clear(): mixed
 }
 
 /**
@@ -31,22 +27,30 @@ function stringify (...args: Array<any>) {
  * @param sort True to ignore the order of events.
  * @param verbose True to also send all logged events to the console.
  */
-export function makeAssertLog (
-  sort: boolean = false,
-  verbose: boolean = false
-): AssertLog {
+export function makeAssertLog (opts: AssertLogOptions = {}): AssertLog {
+  const { ignoreOrder = false, verbose = false } = opts
   let events: Array<string> = []
 
-  const out: any = function log (...args: Array<any>) {
-    const event = stringify(...args)
+  const out: any = function log () {
+    let event = ''
+    for (let i = 0; i < arguments.length; ++i) {
+      const arg = arguments[i]
+      if (i > 0) event += ' '
+      event += typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+    }
+
     if (verbose) console.log(event)
     events.push(event)
   }
 
   out.assert = function assert (expected: Array<string>) {
-    sort
+    ignoreOrder
       ? expect(events.sort()).to.deep.equal(expected.sort())
       : expect(events).to.deep.equal(expected)
+    events = []
+  }
+
+  out.clear = function clear () {
     events = []
   }
 
