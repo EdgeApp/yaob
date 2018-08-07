@@ -53,6 +53,7 @@
     "rimraf": "^2.6.2",
     "rollup": "^0.61.2",
     "rollup-plugin-babel": "^3.0.5",
+    "rollup-plugin-filesize": "^4.0.1",
     "rollup-plugin-flow-entry": "^0.2.0",
     "source-map-support": "^0.5.6"
   },

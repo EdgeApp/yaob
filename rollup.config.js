@@ -1,4 +1,5 @@
 import babel from 'rollup-plugin-babel'
+import filesize from 'rollup-plugin-filesize'
 import flowEntry from 'rollup-plugin-flow-entry'
 
 import packageJson from './package.json'
@@ -17,5 +18,5 @@ export default {
     { file: packageJson.main, format: 'cjs', sourcemap: true },
     { file: packageJson.module, format: 'es', sourcemap: true }
   ],
-  plugins: [babel(babelOpts), flowEntry()]
+  plugins: [babel(babelOpts), flowEntry(), filesize()]
 }
