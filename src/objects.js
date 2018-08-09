@@ -6,13 +6,13 @@
  */
 
 import { packData, packThrow, unpackData } from './data.js'
-import { onMethod } from './events.js'
 import {
   MAGIC_KEY,
   type ProxyMagic,
   getInstanceMagic,
   makeProxyMagic
 } from './magic.js'
+import { onMethod } from './manage.js'
 import type { CreateMessage, PackedProps } from './messages.js'
 import type { BridgeState } from './state.js'
 

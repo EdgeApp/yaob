@@ -8,21 +8,18 @@ import type {
   SharedClasses
 } from './bridge.js'
 import { Bridgeable } from './bridgeable.js'
+import { bridgifyClass, bridgifyObject } from './magic.js'
 import {
   type CallbackRemover,
   type EmitMethod,
   type OnMethod,
   addListener,
+  closeObject,
   emitEvent,
   emitMethod,
-  onMethod
-} from './events.js'
-import {
-  bridgifyClass,
-  bridgifyObject,
-  closeObject,
+  onMethod,
   updateObject
-} from './magic.js'
+} from './manage.js'
 
 // Defining bridgeable objects:
 export { Bridgeable, bridgifyClass, bridgifyObject }

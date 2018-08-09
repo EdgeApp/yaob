@@ -53,32 +53,6 @@ export type ProxyMagic = CommonMagic & {
 let nextLocalId = 1
 
 /**
- * Destroys a proxy.
- * The remote client will completely forget about this object,
- * and accessing it will become an error.
- */
-export function closeObject (o: Object) {
-  const magic = getInstanceMagic(o)
-
-  magic.closed = true
-  for (const bridge of magic.bridges) {
-    bridge.emitClose(magic.localId)
-  }
-  magic.bridges = []
-}
-
-/**
- * Marks an object as having changes. The proxy server will send an update.
- */
-export function updateObject (o: Object, name?: string) {
-  const magic = getInstanceMagic(o)
-
-  for (const bridge of magic.bridges) {
-    bridge.emitChange(magic.localId, name)
-  }
-}
-
-/**
  * Adds a magic marker to a class.
  * Anything derived from this class will be bridgeable.
  */

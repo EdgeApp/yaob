@@ -1,8 +1,8 @@
 // @flow
 
-import type { EmitMethod, OnMethod } from './events.js'
-import { emitMethod, onMethod } from './events.js'
-import { closeObject, shareClass, updateObject } from './magic.js'
+import { shareClass } from './magic.js'
+import type { EmitMethod, OnMethod } from './manage.js'
+import { closeObject, emitMethod, onMethod, updateObject } from './manage.js'
 
 /**
  * The base class for all bridgeable API's. Provides callback capability.

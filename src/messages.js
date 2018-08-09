@@ -1,8 +1,7 @@
 // @flow
 
 import { type PackedData, unpackData } from './data.js'
-import { emitEvent } from './events.js'
-import { closeObject } from './magic.js'
+import { closeObject, emitEvent } from './manage.js'
 import {
   type ChangeEvent,
   diffObject,

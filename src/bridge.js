@@ -1,7 +1,7 @@
 // @flow
 
 import { packData, unpackData } from './data.js'
-import { addListener } from './events.js'
+import { addListener } from './manage.js'
 import { type Message, handleMessage, makeMessage } from './messages.js'
 import { BridgeState } from './state.js'
 
