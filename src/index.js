@@ -1,6 +1,12 @@
 // @flow
 
-import { Bridge, type LocalBridgeOptions, makeLocalBridge } from './bridge.js'
+import { Bridge, makeLocalBridge } from './bridge.js'
+import type {
+  BridgeOptions,
+  LocalBridgeOptions,
+  SendMessage,
+  SharedClasses
+} from './bridge.js'
 import { Bridgeable } from './bridgeable.js'
 import {
   type CallbackRemover,
@@ -17,7 +23,6 @@ import {
   closeObject,
   updateObject
 } from './magic.js'
-import type { BridgeOptions, SendMessage, SharedClasses } from './state.js'
 
 // Defining bridgeable objects:
 export { Bridgeable, bridgifyClass, bridgifyObject }
