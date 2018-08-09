@@ -5,13 +5,13 @@ import { describe, it } from 'mocha'
 
 import {
   Bridgeable,
-  type OnMethod,
   bridgifyClass,
   bridgifyObject,
-  emitEvent,
+  emit,
   makeLocalBridge,
   onMethod
 } from '../src/index.js'
+import type { OnMethod } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
 
@@ -153,7 +153,7 @@ describe('bridging', function () {
     const local = makeLocalBridge(remote)
     local.on('event', x => log('got event', x))
 
-    emitEvent(remote, 'event', 1)
+    emit(remote, 'event', 1)
     await delay(10)
     log.assert(['got event 1'])
   })
@@ -170,7 +170,7 @@ describe('bridging', function () {
 
       foo () {
         this.flag = true
-        this.update()
+        this._update()
         return 'bar'
       }
     }
@@ -182,7 +182,7 @@ describe('bridging', function () {
     local.on('event', x => log('got event', x))
 
     // Quickly try the basics:
-    remote.emit('event', 1)
+    remote._emit('event', 1)
     expect(await local.foo()).equals('bar')
     expect(local.flag).equals(true)
     log.assert(['got event 1'])

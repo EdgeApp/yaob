@@ -3,7 +3,7 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { Bridgeable, closeObject } from '../src/index.js'
+import { Bridgeable, close } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
 
@@ -28,7 +28,7 @@ class ParentApi extends Bridgeable<> {
   }
 
   async closeChild (child: ChildApi) {
-    closeObject(child)
+    close(child)
   }
 }
 
@@ -71,7 +71,7 @@ describe('closing', function () {
     log.assert(['server +1 e1', 'client c1', 'server +1 r1'])
 
     // Deleting local proxies disables property access:
-    closeObject(child)
+    close(child)
     await checkDestruction(child)
     await delay(10)
     log.assert([])
@@ -91,7 +91,7 @@ describe('closing', function () {
     log.assert(['server +1 e1'])
 
     // The server closes the object on its own initiative:
-    closeObject(remote)
+    close(remote)
     await delay(10)
     await checkDestruction(local)
     log.assert(['server -1'])

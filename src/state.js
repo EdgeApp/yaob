@@ -4,7 +4,7 @@ import type { BridgeOptions, SendMessage, SharedClasses } from './bridge.js'
 import { Bridgeable } from './bridgeable.js'
 import { type ObjectTable, packData, packThrow, unpackData } from './data.js'
 import { bridgifyClass, getInstanceMagic, shareClass } from './magic.js'
-import { closeObject, emitEvent, updateObject } from './manage.js'
+import { close, emit, update } from './manage.js'
 import type {
   CallMessage,
   ChangeMessage,
@@ -227,13 +227,13 @@ export class BridgeState implements ObjectTable {
         }
         const newEvents = updateObjectProps(this, o, props)
         events = events.concat(newEvents)
-        updateObject(o)
+        update(o)
       }
 
       // Pass 2: Fire the callbacks:
       for (const event of events) {
         const { proxy, name, payload } = event
-        emitEvent(proxy, name, payload)
+        emit(proxy, name, payload)
       }
     }
 
@@ -248,9 +248,9 @@ export class BridgeState implements ObjectTable {
         const o = localId === 0 ? this : this.proxies[localId]
         if (o == null) continue
         try {
-          emitEvent(o, name, unpackData(this, event, name))
+          emit(o, name, unpackData(this, event, name))
         } catch (e) {
-          emitEvent(o, 'error', e) // Payload unpacking problem
+          emit(o, 'error', e) // Payload unpacking problem
         }
       }
     }
@@ -308,7 +308,7 @@ export class BridgeState implements ObjectTable {
         const o = this.proxies[localId]
         if (o == null) return
         delete this.proxies[localId]
-        closeObject(o)
+        close(o)
       }
     }
   }

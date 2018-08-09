@@ -3,7 +3,7 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { Bridgeable, updateObject } from '../src/index.js'
+import { Bridgeable, update } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge } from './utils/utils.js'
 
@@ -20,7 +20,7 @@ describe('updating', function () {
 
       increment (step: number) {
         this.count = this.count + step
-        updateObject(this)
+        update(this)
         return this.count
       }
 
@@ -66,13 +66,13 @@ describe('updating', function () {
 
       push (item: number) {
         this.list.push(item)
-        updateObject(this, 'list')
+        update(this, 'list')
         return this.list
       }
 
       pushWithGeneralUpdate (item: number) {
         this.list.push(item)
-        updateObject(this)
+        update(this)
         return this.list
       }
 

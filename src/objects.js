@@ -5,6 +5,7 @@
  * and then restoring those messages into proxies on the other side.
  */
 
+import { onMethod } from './bridgeable.js'
 import { packData, packThrow, unpackData } from './data.js'
 import {
   MAGIC_KEY,
@@ -12,7 +13,6 @@ import {
   getInstanceMagic,
   makeProxyMagic
 } from './magic.js'
-import { onMethod } from './manage.js'
 import type { CreateMessage, PackedProps } from './messages.js'
 import type { BridgeState } from './state.js'
 

@@ -107,9 +107,9 @@ expect(root).to.not.have.property('_multiplier')
 
 ### Updating properties
 
-Any time a property changes, the server-side object should call `this.update()`. This method is part of the `Bridgeable` base class. It tells the bridge to diff the object's properties and send over the changed ones.
+Any time a property changes, the server-side object should call `this._update()`. This method is part of the `Bridgeable` base class. It tells the bridge to diff the object's properties and send over the changed ones. The `_update` method is only available on the server side, since its name begins with an underscore.
 
-The bridge compares the object's properties shallowly (`===`). This means `yaob` won't notice if you modify the contents of an array, for example, since the property's identity doesn't change (it's still the same array). To force the bridge to send a property like this, simply pass the property's name to the `update` method:
+The bridge compares the object's properties shallowly (`===`). This means `yaob` won't notice if you modify the contents of an array, for example, since the property's identity doesn't change (it's still the same array). To force the bridge to send a property like this, simply pass the property's name to the `_update` method:
 
 ```js
 class ListExample extends Bridgeable {
@@ -121,7 +121,7 @@ class ListExample extends Bridgeable {
     this.list.push(item)
 
     // Explicitly send the `list` property over the bridge:
-    this.update('list')
+    this._update('list')
   }
 }
 ```
@@ -138,16 +138,18 @@ listExample.on('listChanged', list => {
 
 Any time a property changes, the bridge will automatically generate a property-`Changed` event with the new value. The bridge will also emit an `error` event any time an event callback throws an exception.
 
-To send events explicitly, use the `emit` method, which is also part of the `Bridgeable` base class:
+To send events, use the `_emit` method, which is also part of the `Bridgeable` base class:
 
 ```js
-someObject.emit('eventName', somePayload)
+someObject._emit('eventName', somePayload)
 ```
+
+The `on` method is available on both the client and server side objects, but the `_emit` method is only available on the server side, since its name begins with an underscore.
 
 The payload must be a single value. If you need a more complicated payload, simply pack everything into an object:
 
 ```js
-someObject.emit('logout', { username: 'yaob', reason: 'timeout' })
+someObject._emit('logout', { username: 'yaob', reason: 'timeout' })
 ```
 
 The `on` method returns an unsubscribe function. You can use this to unsubscribe at any time. You can also use it to set up a one-shot event listener:
@@ -163,7 +165,7 @@ const unsubscribe = someObject.on('logout', payload => {
 
 Once the server sends an object over the bridge, the object will stick around for the lifetime of the bridge. This is because there is no way of knowing when the client will access the object again. This can leak memory.
 
-If this sort of thing becomes a problem, you can explicitly free objects by calling `this.close()`, which is part of the `Bridgeable` base class. Closing a server-side object will make it un-bridgeable and will destroy the client-side object. Accessing any property or method on the client side will then throw an exception.
+If this sort of thing becomes a problem, you can explicitly free objects by calling `this._close()`, which is part of the `Bridgeable` base class. Closing a server-side object will make it un-bridgeable and will destroy the client-side object. Accessing any property or method on the client side will then throw an exception.
 
 This can also be a useful way to represent logging out of accounts, closing files, or other situations where an API object needs to become unusable.
 
@@ -234,28 +236,25 @@ const server = new Bridge({
 
 ### Avoiding `Bridgeable`
 
-The easiest way to make your object bridgeable is to inherit from the `Bridgeable` base class. If you need more control though, `yaob` provides other options:
+The easiest way to make your object bridgeable is to extend the `Bridgeable` base class. If you need more control though, `yaob` provides other options:
 
 * Call `bridgifyClass` on a class constructor function. Any instances of this class will be bridgeable.
 * Call `bridgifyObject` directly on an object.
 * Put your base class in the `sharedClasses` object. All these classes are automatically bridgeable, even if they don't inherit from `Bridgeable`.
 
-You might use one of these other options if you don't control your class hierarchy, or if you don't want to expose all the methods from the `Bridgeable` base class to your API users. Even without the methods from the `Bridgeable` base class, you can still access the same functionality using the following substitutes:
+You might use one of these other options if you don't control your class hierarchy, for instance. All the `Bridgeable` methods have standalone versions, so their functionality is available even if your class doesn't extend `Bridgeable`:
 
 ```js
-import { addListener, closeObject, emitEvent, updateObject } from 'yaob'
+import { close, emit, update } from 'yaob'
 
-// Instead of object.on(...):
-addListener(object, 'event', callback)
+// Instead of this._emit(...):
+emit(this, 'event', payload)
 
-// Instead of object.emit(...):
-emitEvent(object, 'event', payload)
+// Instead of this._update():
+update(this)
 
-// Instead of object.update():
-updateObject(object)
-
-// Instead of object.close():
-closeObject(object)
+// Instead of this._close():
+close(this)
 ```
 
 If you would like to give your users a nice `on` method like the one `Bridgeable` provides, you can do this:
