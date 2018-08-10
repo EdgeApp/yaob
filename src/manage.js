@@ -14,10 +14,13 @@ export type CallbackRemover = () => mixed
 /**
  * Signature of the `on` method.
  */
-export type OnMethod<Events = {}> = <Name: $Keys<Events>>(
+export type Subscriber<Events: {} = {}> = <Name: $Keys<Events>>(
   name: Name,
   f: (v: $ElementType<Events, Name>) => mixed
 ) => CallbackRemover
+
+// No user-supplied value will ever be identical to this.
+export const dirtyValue = {}
 
 /**
  * Subscribes to an event on a bridgeable object.
@@ -34,6 +37,29 @@ export function addListener (
 
   return function unsubscribe () {
     listeners[name] = listeners[name].filter(i => i !== f)
+  }
+}
+
+/**
+ * Subscribes to property changes on a bridgeable object.
+ */
+export function addWatcher (
+  o: Object,
+  name: string,
+  f: Function
+): CallbackRemover {
+  const { watchers } = getInstanceMagic(o)
+
+  // Call the callback once.
+  // Don't catch access errors, since we want the user to see them:
+  const data = o[name]
+  callCallback(o, f, data, true)
+
+  if (watchers[name] == null) watchers[name] = { data, fs: [f] }
+  else watchers[name].fs.push(f)
+
+  return function unsubscribe () {
+    watchers[name].fs = watchers[name].fs.filter(i => i !== f)
   }
 }
 
@@ -65,17 +91,9 @@ export function emit (o: Object, name: string, payload: mixed): mixed {
 
   // Call local callbacks:
   const listeners = magic.listeners[name]
-  if (listeners == null) return
-  for (const f of listeners) {
-    try {
-      const out = f(payload)
-
-      // If the function returns a promise, emit an error if it rejects:
-      if (out != null && typeof out.then === 'function') {
-        out.then(void 0, e => emit(o, 'error', e))
-      }
-    } catch (e) {
-      if (name !== 'error') emit(o, 'error', e)
+  if (listeners != null) {
+    for (const f of listeners) {
+      callCallback(o, f, payload, name !== 'error')
     }
   }
 }
@@ -88,5 +106,43 @@ export function update<T: {}> (o: T, name?: $Keys<T>): mixed {
 
   for (const bridge of magic.bridges) {
     bridge.markDirty(magic.localId, name)
+  }
+
+  // Blow away the cache if we have a name:
+  if (name != null && magic.watchers[name] != null) {
+    magic.watchers[name].data = dirtyValue
+  }
+
+  // Call watcher callbacks:
+  for (const n in magic.watchers) {
+    const cache = magic.watchers[n]
+    try {
+      const data = o[n]
+      if (data !== cache.data) {
+        cache.data = data
+        for (const f of cache.fs) callCallback(o, f, cache.data, true)
+      }
+    } catch (e) {}
+  }
+}
+
+/**
+ * Calls a user-supplied callback function with error checking.
+ */
+export function callCallback (
+  o: Object,
+  f: Function,
+  payload: mixed,
+  emitError: boolean
+) {
+  try {
+    const out = f(payload)
+
+    // If the function returns a promise, emit an error if it rejects:
+    if (emitError && out != null && typeof out.then === 'function') {
+      out.then(void 0, e => emit(o, 'error', e))
+    }
+  } catch (e) {
+    if (emitError) emit(o, 'error', e)
   }
 }

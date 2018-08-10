@@ -126,19 +126,31 @@ class ListExample extends Bridgeable {
 }
 ```
 
-### Events
+### Watching properties
 
-`Bridgeable` objects can emit events. To subscribe to events, use the `on` method, which is part of the `Bridgeable` base class:
+To receive a callback any time a property changes, use the `watch` method, which is part of the `Bridgeable` base class:
 
 ```js
-listExample.on('listChanged', list => {
-  console.log('got new list:', list)
+someObject.watch('list', newValue => console.log(newValue))
+```
+
+The first parameter is the property name, and the second parameter is the callback. The callback will fire once with the initial value, and then again any time the property changes. The object must use `this.update()` to trigger the changes, as described above.
+
+The `on` method returns an `unsubscribe` function. You can use this to unsubscribe at any time.
+
+### Events
+
+`Bridgeable` objects can also emit events. To subscribe to events, use the `on` method, which is part of the `Bridgeable` base class:
+
+```js
+someObject.on('login', username => {
+  console.log('got new user:', username)
 })
 ```
 
-Any time a property changes, the bridge will automatically generate a property-`Changed` event with the new value. The bridge will also emit an `error` event any time an event callback throws an exception.
+The bridge will emit an `error` event any time an event callback throws an exception.
 
-To send events, use the `_emit` method, which is also part of the `Bridgeable` base class:
+Use the `_emit` method to send events, which is part of the `Bridgeable` base class:
 
 ```js
 someObject._emit('eventName', somePayload)
@@ -259,47 +271,23 @@ update(this)
 close(this)
 ```
 
-If you would like to give your users a nice `on` method like the one `Bridgeable` provides, you can do this:
+If you would like to give your users nice `on` or `watch` methods like the one `Bridgeable` provides, you can do this:
 
 ```js
-import { bridgifyClass, onMethod } from 'yaob'
+import { bridgifyClass, onMethod, watchMethod } from 'yaob'
 
 class SomeApi { ... }
 SomeApi.prototype.on = onMethod
+SomeApi.prototype.watch = watchMethod
 
 bridgifyClass(SomeApi)
 ```
 
-The `onMethod` value is special, so the bridge knows to replace it with a proper `on` method on the client side instead of bridging it.
+The `onMethod` and `watchMethod` values are shared, so the bridge knows to replace them with a proper client-side methods instead of bridging them.
 
 ### Flow Types
 
-This library ships with Flow types. If you are using Flow, you should pass a table of supported events to the `Bridgeable` base class, like this:
-
-```js
-type Events = {
-  someEvent: string,
-  propertyChanged: number
-}
-
-class SomeApi extends Bridgeable<Events> { ... }
-```
-
-For each property in the table, the name is the event name, and the type is the payload type.
-
-If you are using the `onMethod` as described above, you can do this to get proper typing:
-
-```js
-import type { OnMethod } from 'yaob'
-import { bridgifyClass, onMethod } from 'yaob'
-
-class SomeApi {
-  on: OnMethod<Events>
-}
-SomeApi.prototype.on = onMethod
-
-bridgifyClass(SomeApi)
-```
+This library ships with Flow types. For information on using them, please see the [Flow tutorial](./docs/flow.md).
 
 ### Bundling
 

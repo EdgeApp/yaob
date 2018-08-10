@@ -6,25 +6,25 @@ import type {
   LocalBridgeOptions,
   SendMessage
 } from './bridge.js'
-import { Bridgeable, onMethod } from './bridgeable.js'
+import { Bridgeable, onMethod, watchMethod } from './bridgeable.js'
 import { bridgifyClass, bridgifyObject, shareData } from './magic.js'
 import {
   type CallbackRemover,
-  type OnMethod,
+  type Subscriber,
   close,
   emit,
   update
 } from './manage.js'
 
 // Shared data:
-export { onMethod, shareData }
+export { onMethod, shareData, watchMethod }
 
 // Defining bridgeable objects:
 export { Bridgeable, bridgifyClass, bridgifyObject }
 
 // Managing bridgeable objects:
 export { close, emit, update }
-export type { CallbackRemover, OnMethod }
+export type { CallbackRemover, Subscriber }
 
 // Building bridges:
 export { Bridge, makeLocalBridge }

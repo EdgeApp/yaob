@@ -5,6 +5,7 @@
   "license": "MIT",
   "files": [
     "CHANGELOG.md",
+    "docs/*",
     "lib/*",
     "package.json",
     "README.md",

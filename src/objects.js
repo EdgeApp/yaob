@@ -15,12 +15,6 @@ import {
 import type { CreateMessage, PackedProps } from './messages.js'
 import type { BridgeState } from './state.js'
 
-export type ChangeEvent = {
-  proxy: Object,
-  name: string,
-  payload: mixed
-}
-
 export type ValueCache = { [name: string]: mixed }
 
 // No user-supplied value will ever be identical to this.
@@ -117,7 +111,7 @@ export function makeProxy (state: BridgeState, create: CreateMessage): Object {
   const magic = makeProxyMagic(create.localId)
   props[MAGIC_KEY] = { value: magic }
 
-  // Add the getters property descriptors:
+  // Add the getters:
   for (const n in create.props) {
     props[n] = { get: makeProxyGetter(magic, n) }
   }
@@ -138,21 +132,18 @@ export function updateObjectProps (
   state: BridgeState,
   o: Object,
   props: PackedProps
-): Array<ChangeEvent> {
+): mixed {
   const magic: ProxyMagic = o[MAGIC_KEY]
 
-  const out: Array<ChangeEvent> = []
   for (const n in props) {
     try {
       magic.props[n] = unpackData(state, props[n], n)
       magic.errors[n] = false
-      out.push({ proxy: o, name: n + 'Changed', payload: magic.props[n] })
     } catch (e) {
       magic.props[n] = e
       magic.errors[n] = true
     }
   }
-  return out
 }
 
 function makeProxyGetter (magic: ProxyMagic, name: string) {

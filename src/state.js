@@ -13,7 +13,6 @@ import type {
   ReturnMessage
 } from './messages.js'
 import {
-  type ChangeEvent,
   type ValueCache,
   diffObject,
   dirtyValue,
@@ -200,22 +199,18 @@ export class BridgeState implements ObjectTable {
     // Handle updated objects:
     if (message.changed) {
       // Pass 1: Update all the proxies:
-      let events: Array<ChangeEvent> = []
       for (const change of message.changed) {
         const { localId, props } = change
         const o = this.proxies[localId]
         if (o == null) {
           throw new RangeError(`Invalid localId ${localId}`)
         }
-        const newEvents = updateObjectProps(this, o, props)
-        events = events.concat(newEvents)
-        update(o)
+        updateObjectProps(this, o, props)
       }
 
       // Pass 2: Fire the callbacks:
-      for (const event of events) {
-        const { proxy, name, payload } = event
-        emit(proxy, name, payload)
+      for (const change of message.changed) {
+        update(this.proxies[change.localId])
       }
     }
 

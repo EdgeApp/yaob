@@ -11,7 +11,7 @@ import {
   makeLocalBridge,
   onMethod
 } from '../src/index.js'
-import type { OnMethod } from '../src/index.js'
+import type { Subscriber } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
 
@@ -133,7 +133,7 @@ describe('bridging', function () {
   it('preserves onMethod', async function () {
     const log = makeAssertLog()
     class SomeClass {
-      on: OnMethod<{ event: number }>
+      on: Subscriber<{ event: number }>
     }
     SomeClass.prototype.on = onMethod
     bridgifyClass(SomeClass)
@@ -149,7 +149,7 @@ describe('bridging', function () {
 
   it('bridges proxies', async function () {
     const log = makeAssertLog()
-    class SomeClass extends Bridgeable<{ event: number }> {
+    class SomeClass extends Bridgeable<{ flag: boolean }, { event: number }> {
       flag: boolean
 
       constructor () {
@@ -169,11 +169,13 @@ describe('bridging', function () {
     const local = makeLocalBridge(makeLocalBridge(remote))
     expect(local.flag).equals(false)
     local.on('event', x => log('got event', x))
+    local.watch('flag', x => log('got flag', x))
+    log.assert(['got flag false'])
 
     // Quickly try the basics:
     remote._emit('event', 1)
     expect(await local.foo()).equals('bar')
     expect(local.flag).equals(true)
-    log.assert(['got event 1'])
+    log.assert(['got event 1', 'got flag true'])
   })
 })

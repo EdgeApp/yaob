@@ -9,12 +9,15 @@ import { delay, makeLoggedBridge } from './utils/utils.js'
 describe('events', function () {
   it('work locally', function () {
     const log = makeAssertLog({ sort: true })
-    const p: Bridgeable<{
-      bar: number,
-      bogus: number,
-      error: Error,
-      foo: number
-    }> = new Bridgeable()
+    const p: Bridgeable<
+      {},
+      {
+        bar: number,
+        bogus: number,
+        error: Error,
+        foo: number
+      }
+    > = new Bridgeable()
 
     // Simple calls:
     p.on('foo', x => log(`callback1: ${x}`))
@@ -42,9 +45,12 @@ describe('events', function () {
 
   it('work over a bridge', async function () {
     const log = makeAssertLog()
-    class EventApi extends Bridgeable<{
-      event: string
-    }> {}
+    class EventApi extends Bridgeable<
+      {},
+      {
+        event: string
+      }
+    > {}
 
     const remote = new EventApi()
     const local = await makeLoggedBridge(log, remote)

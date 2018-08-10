@@ -29,7 +29,10 @@ type ObjectMagic = {
   bridges: Array<BridgeState>,
 
   // Event listeners subscribed to this object:
-  listeners: { [name: string]: Array<Function> }
+  listeners: { [name: string]: Array<Function> },
+
+  // Property watchers subscribed to this object:
+  watchers: { [name: string]: { data: mixed, fs: Array<Function> } }
 }
 
 /**
@@ -96,7 +99,8 @@ export function bridgifyObject (o: Object): mixed {
     const magic: InstanceMagic = {
       localId: nextLocalId++,
       bridges: [],
-      listeners: {}
+      listeners: {},
+      watchers: {}
     }
     addMagic(o, magic)
   }
@@ -122,6 +126,7 @@ export function makeProxyMagic (remoteId: number): ProxyMagic {
     localId: nextLocalId++,
     bridges: [],
     listeners: {},
+    watchers: {},
     // ProxyMagic:
     remoteId,
     errors: {},
