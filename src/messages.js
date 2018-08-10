@@ -141,7 +141,9 @@ export function handleMessage (state: BridgeState, message: Message) {
       try {
         const o = state.objects[remoteId]
         if (o == null) {
-          throw new TypeError(`Cannot call method '${name}' of deleted proxy`)
+          throw new TypeError(
+            `Cannot call method '${name}' of closed proxy (remote)`
+          )
         }
         if (typeof o[name] !== 'function') {
           throw new TypeError(`'${name}' is not a function`)

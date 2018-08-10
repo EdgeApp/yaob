@@ -54,7 +54,7 @@ function checkDestruction (child: ChildApi): Promise<mixed> {
   // Remote method call fails:
   return promiseFail(
     child.asyncMethod(1.5),
-    "TypeError: Cannot read property 'asyncMethod' of deleted proxy"
+    "TypeError: Cannot call method 'asyncMethod' of closed proxy"
   )
 }
 

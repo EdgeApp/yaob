@@ -191,7 +191,7 @@ function makeProxyMethod (state: BridgeState, magic: ProxyMagic, name: string) {
   return function method (...args) {
     if (magic.closed) {
       return Promise.reject(
-        new TypeError(`Cannot read property '${name}' of deleted proxy`)
+        new TypeError(`Cannot call method '${name}' of closed proxy`)
       )
     }
     return state.emitCall(magic.remoteId, name, args)
