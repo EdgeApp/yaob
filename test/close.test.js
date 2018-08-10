@@ -33,20 +33,9 @@ class ParentApi extends Bridgeable<> {
 }
 
 function checkDestruction (child: ChildApi): Promise<mixed> {
-  function f (bogus) {}
-
-  // Client-side methods work:
+  // Client-side methods & properties work:
   expect(child.syncMethod(1.5)).equals(3)
-
-  // Remote property access fails:
-  try {
-    f(child.answer)
-    throw new Error('should throw')
-  } catch (e) {
-    expect(e.toString()).equals(
-      "TypeError: Cannot read property 'answer' of deleted proxy"
-    )
-  }
+  expect(child.answer).equals(42)
 
   // Remote method call fails:
   return promiseFail(

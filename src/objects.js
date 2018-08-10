@@ -171,7 +171,6 @@ export function updateObjectProps (
     } catch (e) {
       magic.props[n] = e
       magic.errors[n] = true
-      out.push({ proxy: o, name: 'error', payload: e })
     }
   }
   return out
@@ -179,9 +178,6 @@ export function updateObjectProps (
 
 function makeProxyGetter (magic: ProxyMagic, name: string) {
   return function get () {
-    if (magic.closed) {
-      throw new TypeError(`Cannot read property '${name}' of deleted proxy`)
-    }
     if (magic.errors[name]) throw magic.props[name]
     return magic.props[name]
   }
