@@ -9,7 +9,7 @@ export function delay (ms: number) {
 }
 
 export function promiseFail (
-  promise: Promise<any>,
+  promise: Promise<mixed>,
   text: string
 ): Promise<mixed> {
   return promise.then(

@@ -19,10 +19,10 @@ import type { BridgeState } from './state.js'
 export type ChangeEvent = {
   proxy: Object,
   name: string,
-  payload: any
+  payload: mixed
 }
 
-export type ValueCache = { [name: string]: any }
+export type ValueCache = { [name: string]: mixed }
 
 // No user-supplied value will ever be identical to this.
 export const dirtyValue = {}
@@ -166,11 +166,11 @@ export function updateObjectProps (
   for (const n in props) {
     try {
       magic.props[n] = unpackData(state, props[n], `${path}.${n}`)
-      magic.errors[n] = void 0
+      magic.errors[n] = false
       out.push({ proxy: o, name: n + 'Changed', payload: magic.props[n] })
     } catch (e) {
-      magic.props[n] = void 0
-      magic.errors[n] = e
+      magic.props[n] = e
+      magic.errors[n] = true
       out.push({ proxy: o, name: 'error', payload: e })
     }
   }
@@ -182,7 +182,7 @@ function makeProxyGetter (magic: ProxyMagic, name: string) {
     if (magic.closed) {
       throw new TypeError(`Cannot read property '${name}' of deleted proxy`)
     }
-    if (magic.errors[name]) throw magic.errors[name]
+    if (magic.errors[name]) throw magic.props[name]
     return magic.props[name]
   }
 }
