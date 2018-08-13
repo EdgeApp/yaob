@@ -13,9 +13,9 @@ export const MAGIC_KEY = '_yaob'
 /**
  * Common flags that might be found on any magic value:
  */
-export type CommonMagic = {
+export type BaseMagic = {
   // This level of the prototype chain is a shared class when set:
-  +base?: string,
+  base?: string,
 
   // The object is non-bridgeable when set:
   closed?: true,
@@ -24,17 +24,11 @@ export type CommonMagic = {
   skip?: true
 }
 
-/**
- * Magic data found on user-facing object instances.
- */
-export type InstanceMagic = CommonMagic & {
+export type CommonInstanceMagic = BaseMagic & {
   // The object id on this side of the bridge:
-  +localId: number,
+  localId: number,
 
-  // This is a proxy object if set. See ProxyMagic for other properties:
-  +remoteId?: number,
-
-  // Bridges serving this object:
+  // Bridges subscribed to this object:
   bridges: Array<BridgeState>,
 
   // Event listeners subscribed to this object:
@@ -42,41 +36,27 @@ export type InstanceMagic = CommonMagic & {
 }
 
 /**
+ * Magic data found on user-facing object instances.
+ */
+export type InstanceMagic = CommonInstanceMagic & {
+  // This is a proxy object if set. See ProxyMagic for other properties:
+  +remoteId?: number
+}
+
+/**
  * Magic data found on proxy objects.
  */
-export type ProxyMagic = CommonMagic & {
+export type ProxyMagic = CommonInstanceMagic & {
   +remoteId: number,
-  +errors: { [name: string]: Error | void },
-  +props: { [name: string]: any }
+
+  // True if the property getter should throw the value:
+  +errors: { [name: string]: boolean },
+
+  // Values for property getters to return:
+  +props: { [name: string]: mixed }
 }
 
 let nextLocalId = 1
-
-/**
- * Destroys a proxy.
- * The remote client will completely forget about this object,
- * and accessing it will become an error.
- */
-export function closeObject (o: Object) {
-  const magic = getInstanceMagic(o)
-
-  magic.closed = true
-  for (const bridge of magic.bridges) {
-    bridge.emitClose(magic.localId)
-  }
-  magic.bridges = []
-}
-
-/**
- * Marks an object as having changes. The proxy server will send an update.
- */
-export function updateObject (o: Object, name?: string) {
-  const magic = getInstanceMagic(o)
-
-  for (const bridge of magic.bridges) {
-    bridge.emitChange(magic.localId, name)
-  }
-}
 
 /**
  * Adds a magic marker to a class.
@@ -85,7 +65,8 @@ export function updateObject (o: Object, name?: string) {
 export function bridgifyClass (Class: Function): mixed {
   const o = Class.prototype
   if (!Object.prototype.hasOwnProperty.call(Class.prototype, MAGIC_KEY)) {
-    Object.defineProperty(o, MAGIC_KEY, { value: {} })
+    const magic: BaseMagic = {}
+    Object.defineProperty(o, MAGIC_KEY, { value: magic })
   }
 }
 
@@ -94,13 +75,14 @@ export function bridgifyClass (Class: Function): mixed {
  */
 export function bridgifyObject (o: Object): mixed {
   if (!Object.prototype.hasOwnProperty.call(o, MAGIC_KEY)) {
-    Object.defineProperty(o, MAGIC_KEY, { value: {} })
+    const magic: BaseMagic = {}
+    Object.defineProperty(o, MAGIC_KEY, { value: magic })
   }
-  const magic = o[MAGIC_KEY]
+  const magic: InstanceMagic = o[MAGIC_KEY]
   if (magic.localId) return
-  magic.bridges = []
-  magic.listeners = []
   magic.localId = nextLocalId++
+  magic.bridges = []
+  magic.listeners = {}
 }
 
 /**
@@ -111,13 +93,14 @@ export function getInstanceMagic (o: Object): InstanceMagic {
   if (o[MAGIC_KEY] == null) throw new TypeError('Not a bridgeable object')
 
   if (!Object.prototype.hasOwnProperty.call(o, MAGIC_KEY)) {
-    Object.defineProperty(o, MAGIC_KEY, { value: { skip: true } })
+    const magic: BaseMagic = { skip: true }
+    Object.defineProperty(o, MAGIC_KEY, { value: magic })
   }
-  const magic = o[MAGIC_KEY]
+  const magic: InstanceMagic = o[MAGIC_KEY]
   if (magic.localId) return magic
-  magic.bridges = []
-  magic.listeners = []
   magic.localId = nextLocalId++
+  magic.bridges = []
+  magic.listeners = {}
   return magic
 }
 
@@ -126,21 +109,24 @@ export function getInstanceMagic (o: Object): InstanceMagic {
  */
 export function makeProxyMagic (remoteId: number): ProxyMagic {
   return {
-    bridges: [],
-    errors: {},
-    listeners: {},
+    // InstanceMagic:
     localId: nextLocalId++,
-    props: {},
-    remoteId
+    bridges: [],
+    listeners: {},
+    // ProxyMagic:
+    remoteId,
+    errors: {},
+    props: {}
   }
 }
 
 export function shareClass (Class: Function, name: string): mixed {
   const o = Class.prototype
   if (!Object.prototype.hasOwnProperty.call(o, MAGIC_KEY)) {
-    Object.defineProperty(o, MAGIC_KEY, { value: {} })
+    const magic: BaseMagic = {}
+    Object.defineProperty(o, MAGIC_KEY, { value: magic })
   }
-  const magic = o[MAGIC_KEY]
+  const magic: BaseMagic = o[MAGIC_KEY]
   if (magic.base) return
   magic.base = name
 }

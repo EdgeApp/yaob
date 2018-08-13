@@ -1,5 +1,6 @@
 // @flow
 
+import type { BridgeOptions, SendMessage, SharedClasses } from './bridge.js'
 import { Bridgeable } from './bridgeable.js'
 import { packData, packThrow } from './data.js'
 import { type InstanceMagic, bridgifyClass, shareClass } from './magic.js'
@@ -9,27 +10,8 @@ import type {
   EventMessage,
   ReturnMessage
 } from './messages.js'
-import { type Message, makeMessage } from './messages.js'
+import { makeMessage } from './messages.js'
 import { type ValueCache, dirtyValue, packObject } from './objects.js'
-
-/**
- * The bridge sends messages using this function.
- */
-export type SendMessage = (message: Message) => mixed
-
-/**
- * A table of classes shared between the client and the server.
- */
-export type SharedClasses = { [name: string]: Function }
-
-/**
- * Options used to create a new bridge.
- */
-export type BridgeOptions = {
-  sendMessage: SendMessage,
-  sharedClasses?: SharedClasses,
-  throttleMs?: number
-}
 
 export class BridgeState {
   // Objects:

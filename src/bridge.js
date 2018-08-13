@@ -1,12 +1,36 @@
 // @flow
 
 import { packData, unpackData } from './data.js'
-import { addListener } from './events.js'
+import { addListener } from './manage.js'
 import { type Message, handleMessage, makeMessage } from './messages.js'
-import { type BridgeOptions, BridgeState, type SharedClasses } from './state.js'
+import { BridgeState } from './state.js'
 
+/**
+ * The bridge sends messages using this function.
+ */
+export type SendMessage = (message: Message) => mixed
+
+/**
+ * A table of classes shared between the client and the server.
+ */
+export type SharedClasses = { [name: string]: Function }
+
+/**
+ * Options used to create a new bridge.
+ */
+export type BridgeOptions = {
+  sendMessage: SendMessage,
+  sharedClasses?: SharedClasses,
+  throttleMs?: number
+}
+
+/**
+ * Options used to create a new local bridge.
+ */
 export type LocalBridgeOptions = {
-  sharedClasses?: SharedClasses
+  cloneMessage?: (x: Message) => Message,
+  sharedClasses?: SharedClasses,
+  throttleMs?: number
 }
 
 /**
@@ -42,19 +66,24 @@ export class Bridge {
  * but don't want to actually spawn a separate process.
  */
 export function makeLocalBridge<T> (o: T, opts: LocalBridgeOptions = {}): T {
-  const { sharedClasses = {} } = opts
+  function nopClone (m) {
+    return m
+  }
+  const { cloneMessage = nopClone, sharedClasses = {}, throttleMs } = opts
 
   const serverState = new BridgeState({
     sendMessage (message) {
-      handleMessage(clientState, message)
+      handleMessage(clientState, cloneMessage(message))
     },
-    sharedClasses
+    sharedClasses,
+    throttleMs
   })
   const clientState = new BridgeState({
     sendMessage (message) {
-      handleMessage(serverState, message)
+      handleMessage(serverState, cloneMessage(message))
     },
-    sharedClasses
+    sharedClasses,
+    throttleMs
   })
 
   const data = packData(serverState, o)

@@ -26,7 +26,7 @@ To pass over the bridge, objects should inherit from the `Bridgeable` base class
 Here is an example of a simple bridgeable object:
 
 ```js
-import { Bridgeable } from 'yaob';
+import { Bridgeable } from 'yaob'
 
 class WorkerApi extends Bridgeable {
   constructor () {
@@ -55,13 +55,11 @@ import { Bridge } from 'yaob'
 
 // Create a bridge server, telling it how to send messages out:
 const server = new Bridge({
-  sendMessage (message) {
-    postMessage(message)
-  }
+  sendMessage: message => postMessage(message)
 })
 
 // If the worker gets a message, give it to the bridge server:
-onmessage = event => server.handleMessage(event.data))
+onmessage = event => server.handleMessage(event.data)
 ```
 
 Once this send & receive functionality is set up, we can transmit our initial API object:
@@ -84,9 +82,7 @@ const worker = new WebWorker('./worker.js')
 
 // Create the bridge client, telling it how to send messages out:
 const client = new Bridge({
-  sendMessage (message) {
-    worker.postMessage(message);
-  }
+  sendMessage: message => worker.postMessage(message)
 })
 
 // If the worker sends us a message, forward it to the proxy client:
@@ -187,9 +183,19 @@ const testApi = makeLocalBridge(new MyApi())
 
 This example creates a `testApi` which looks and feels just like a `MyApi` instance, but is actually a bridge. Every property change and method call turns into a message, just as it would if the `MyApi` instance were in another process.
 
+The `makeLocalBridge` function also accepts an optional `cloneMessage` function:
+
+```js
+const testApi = makeLocalBridge(new MyApi(), {
+  cloneMessage: m => JSON.parse(JSON.stringify(m))
+})
+```
+
+This makes it possible to incorporate realistic message serialization and deserialization into the test.
+
 ### Shared Base Classes
 
-Both the `makeLocalBridge` function and `Bridgable` constructor accept an optional `sharedClasses` parameter, which is a table of constructor functions. If an object extends one of these base classes on the server side, the bridge will ensure that it also extends the same class on the client side:
+Both the `Bridge` constructor and `makeLocalBridge` function accept an optional `sharedClasses` parameter, which is a table of constructor functions. If an object extends one of these base classes on the server side, the bridge will ensure that it also extends the same class on the client side:
 
 ```js
 class BaseClass extends Bridgeable {
@@ -217,7 +223,18 @@ The `Bridge` constructors on both sides of a messaging interface need to receive
 
 ### Throttling
 
-The `Bridge` constructor accepts a `throttleMs` option. When this option is set, the bridge will wait this long between sending messages. It will batch up any events, method calls, or property changes that occur in the mean time. This may improve performance if properties change often, but could also hurt performance by increasing latency.
+Both the `Bridge` constructor and `makeLocalBridge` function accept an optional `throttleMs` option. When this option is set, the bridge will wait this long between sending messages. It will batch up any events, method calls, or property changes that occur in the mean time. This may improve performance if properties change often, but could also hurt performance by increasing latency.
+
+```js
+makeLocalBridge(new RootApi(), { throttleMs: 10 })
+```
+
+```js
+const server = new Bridge({
+  throttleMs: 10,
+  sendMessage () {}
+})
+```
 
 ### Avoiding `Bridgeable`
 
@@ -245,7 +262,7 @@ updateObject(object)
 closeObject(object)
 ```
 
-If you would like to give your users a nice `on` method like the one `Bridgeable` provides, You can do this:
+If you would like to give your users a nice `on` method like the one `Bridgeable` provides, you can do this:
 
 ```js
 import { bridgifyClass, onMethod } from 'yaob'
@@ -280,7 +297,7 @@ import type { OnMethod } from 'yaob'
 import { bridgifyClass, onMethod } from 'yaob'
 
 class SomeApi {
-  +on: OnMethod<Events>
+  on: OnMethod<Events>
 }
 SomeApi.prototype.on = onMethod
 

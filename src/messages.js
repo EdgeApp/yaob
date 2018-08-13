@@ -1,8 +1,7 @@
 // @flow
 
 import { type PackedData, unpackData } from './data.js'
-import { emitEvent } from './events.js'
-import { closeObject } from './magic.js'
+import { closeObject, emitEvent } from './manage.js'
 import {
   type ChangeEvent,
   diffObject,
@@ -141,7 +140,9 @@ export function handleMessage (state: BridgeState, message: Message) {
       try {
         const o = state.objects[remoteId]
         if (o == null) {
-          throw new TypeError(`Cannot call method '${name}' of deleted proxy`)
+          throw new TypeError(
+            `Cannot call method '${name}' of closed proxy (remote)`
+          )
         }
         if (typeof o[name] !== 'function') {
           throw new TypeError(`'${name}' is not a function`)

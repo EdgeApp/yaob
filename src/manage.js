@@ -1,4 +1,8 @@
 // @flow
+/**
+ * @file
+ * Functions for managing updates, events, and object lifetime.
+ */
 
 import { getInstanceMagic } from './magic.js'
 
@@ -42,6 +46,21 @@ export function addListener (
 }
 
 /**
+ * Destroys a proxy.
+ * The remote client will completely forget about this object,
+ * and accessing it will become an error.
+ */
+export function closeObject (o: Object) {
+  const magic = getInstanceMagic(o)
+
+  magic.closed = true
+  for (const bridge of magic.bridges) {
+    bridge.emitClose(magic.localId)
+  }
+  magic.bridges = []
+}
+
+/**
  * Emits an event on a bridgeable object.
  */
 export function emitEvent (o: Object, name: string, payload: mixed): mixed {
@@ -81,6 +100,17 @@ export const emitMethod: any = function emitMethod (name, payload) {
  * The addListener function,
  * but packaged as a method and ready to be placed on an object.
  */
-export const onMethod: any = function onMethod (name, f) {
+export const onMethod: Function = function onMethod (name, f) {
   return addListener(this, name, f)
+}
+
+/**
+ * Marks an object as having changes. The proxy server will send an update.
+ */
+export function updateObject (o: Object, name?: string) {
+  const magic = getInstanceMagic(o)
+
+  for (const bridge of magic.bridges) {
+    bridge.emitChange(magic.localId, name)
+  }
 }

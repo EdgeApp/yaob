@@ -6,23 +6,23 @@
  */
 
 import { packData, packThrow, unpackData } from './data.js'
-import { onMethod } from './events.js'
 import {
   MAGIC_KEY,
   type ProxyMagic,
   getInstanceMagic,
   makeProxyMagic
 } from './magic.js'
+import { onMethod } from './manage.js'
 import type { CreateMessage, PackedProps } from './messages.js'
 import type { BridgeState } from './state.js'
 
 export type ChangeEvent = {
   proxy: Object,
   name: string,
-  payload: any
+  payload: mixed
 }
 
-export type ValueCache = { [name: string]: any }
+export type ValueCache = { [name: string]: mixed }
 
 // No user-supplied value will ever be identical to this.
 export const dirtyValue = {}
@@ -166,11 +166,11 @@ export function updateObjectProps (
   for (const n in props) {
     try {
       magic.props[n] = unpackData(state, props[n], `${path}.${n}`)
-      magic.errors[n] = void 0
+      magic.errors[n] = false
       out.push({ proxy: o, name: n + 'Changed', payload: magic.props[n] })
     } catch (e) {
-      magic.props[n] = void 0
-      magic.errors[n] = e
+      magic.props[n] = e
+      magic.errors[n] = true
       out.push({ proxy: o, name: 'error', payload: e })
     }
   }
@@ -182,7 +182,7 @@ function makeProxyGetter (magic: ProxyMagic, name: string) {
     if (magic.closed) {
       throw new TypeError(`Cannot read property '${name}' of deleted proxy`)
     }
-    if (magic.errors[name]) throw magic.errors[name]
+    if (magic.errors[name]) throw magic.props[name]
     return magic.props[name]
   }
 }
@@ -191,7 +191,7 @@ function makeProxyMethod (state: BridgeState, magic: ProxyMagic, name: string) {
   return function method (...args) {
     if (magic.closed) {
       return Promise.reject(
-        new TypeError(`Cannot read property '${name}' of deleted proxy`)
+        new TypeError(`Cannot call method '${name}' of closed proxy`)
       )
     }
     return state.emitCall(magic.remoteId, name, args)
