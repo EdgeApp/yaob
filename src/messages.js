@@ -196,7 +196,7 @@ export function handleMessage (state: BridgeState, message: Message) {
 export function makeMessage (state: BridgeState): Message {
   // Build change messages:
   const changed: Array<ChangeMessage> = []
-  for (const id in state.changed) {
+  for (const id in state.dirty) {
     const localId = Number(id)
     const o = state.objects[localId]
     const { dirty, props } = diffObject(state, o, state.caches[localId])

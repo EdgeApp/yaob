@@ -27,7 +27,7 @@ export class BridgeState implements ObjectTable {
   }
 
   // Pending message:
-  changed: { [localId: number]: true }
+  dirty: { [localId: number]: true }
   closed: Array<number>
   created: Array<CreateMessage>
   calls: Array<CallMessage>
@@ -111,8 +111,8 @@ export class BridgeState implements ObjectTable {
   /**
    * Marks an object as needing changes.
    */
-  emitChange (localId: number, name?: string) {
-    this.changed[localId] = true
+  markDirty (localId: number, name?: string) {
+    this.dirty[localId] = true
     if (name != null && name in this.caches[localId]) {
       this.caches[localId][name] = dirtyValue
     }
@@ -185,7 +185,7 @@ export class BridgeState implements ObjectTable {
    * Clears everything scheduled to be sent in the next message.
    */
   messageSent () {
-    this.changed = {}
+    this.dirty = {}
     this.closed = []
     this.created = []
     this.calls = []

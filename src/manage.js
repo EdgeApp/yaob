@@ -111,6 +111,6 @@ export function updateObject (o: Object, name?: string) {
   const magic = getInstanceMagic(o)
 
   for (const bridge of magic.bridges) {
-    bridge.emitChange(magic.localId, name)
+    bridge.markDirty(magic.localId, name)
   }
 }
