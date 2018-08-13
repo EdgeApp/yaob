@@ -2,8 +2,8 @@
 
 import type { BridgeOptions, SendMessage, SharedClasses } from './bridge.js'
 import { Bridgeable } from './bridgeable.js'
-import { packData, packThrow } from './data.js'
-import { type InstanceMagic, bridgifyClass, shareClass } from './magic.js'
+import { type ObjectTable, packData, packThrow } from './data.js'
+import { bridgifyClass, getInstanceMagic, shareClass } from './magic.js'
 import type {
   CallMessage,
   CreateMessage,
@@ -13,7 +13,7 @@ import type {
 import { makeMessage } from './messages.js'
 import { type ValueCache, dirtyValue, packObject } from './objects.js'
 
-export class BridgeState {
+export class BridgeState implements ObjectTable {
   // Objects:
   +sharedClasses: SharedClasses
   +proxies: { [objectId: number]: Object }
@@ -90,10 +90,20 @@ export class BridgeState {
    * The id is positive for objects created on this side of the bridge,
    * and negative for proxy objects reflecting things on the other side.
    */
-  getPackedId (magic: InstanceMagic): number | null {
+  getPackedId (o: Object): number | null {
+    const magic = getInstanceMagic(o)
     if (magic.closed) return null
     if (magic.remoteId != null && this.proxies[magic.remoteId] != null) {
       return -magic.remoteId
+    }
+    if (this.objects[magic.localId] == null) {
+      // Add unknown objects to the bridge:
+      this.objects[magic.localId] = o
+
+      const { cache, create } = packObject(this, o)
+      this.caches[magic.localId] = cache
+      magic.bridges.push(this)
+      this.emitCreate(create, o)
     }
     return magic.localId
   }
@@ -122,16 +132,7 @@ export class BridgeState {
   /**
    * Attaches an object to this bridge, sending a creation message.
    */
-  emitCreate (magic: InstanceMagic, o: Object) {
-    const { localId } = magic
-
-    // Bail out if we already have this object:
-    if (this.objects[localId] != null) return
-    this.objects[localId] = o
-
-    const { cache, create } = packObject(this, o)
-    this.caches[localId] = cache
-    magic.bridges.push(this)
+  emitCreate (create: CreateMessage, o: Object) {
     this.created.push(create)
     // this.wakeup() not needed, since this is part of data packing.
   }
