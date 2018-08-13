@@ -6,12 +6,18 @@ import { type ObjectTable, packData, packThrow } from './data.js'
 import { bridgifyClass, getInstanceMagic, shareClass } from './magic.js'
 import type {
   CallMessage,
+  ChangeMessage,
   CreateMessage,
   EventMessage,
+  Message,
   ReturnMessage
 } from './messages.js'
-import { makeMessage } from './messages.js'
-import { type ValueCache, dirtyValue, packObject } from './objects.js'
+import {
+  type ValueCache,
+  diffObject,
+  dirtyValue,
+  packObject
+} from './objects.js'
 
 export class BridgeState implements ObjectTable {
   // Objects:
@@ -28,11 +34,7 @@ export class BridgeState implements ObjectTable {
 
   // Pending message:
   dirty: { [localId: number]: true }
-  closed: Array<number>
-  created: Array<CreateMessage>
-  calls: Array<CallMessage>
-  returns: Array<ReturnMessage>
-  events: Array<EventMessage>
+  message: Message
 
   // Update scheduling:
   +throttleMs: number
@@ -57,7 +59,8 @@ export class BridgeState implements ObjectTable {
     this.pendingCalls = {}
 
     // Pending message:
-    this.messageSent()
+    this.dirty = {}
+    this.message = {}
 
     // Update scheduling:
     this.throttleMs = throttleMs
@@ -125,7 +128,8 @@ export class BridgeState implements ObjectTable {
   emitClose (localId: number) {
     delete this.objects[localId]
     delete this.caches[localId]
-    this.closed.push(localId)
+    if (this.message.closed == null) this.message.closed = []
+    this.message.closed.push(localId)
     this.wakeup()
   }
 
@@ -133,7 +137,8 @@ export class BridgeState implements ObjectTable {
    * Attaches an object to this bridge, sending a creation message.
    */
   emitCreate (create: CreateMessage, o: Object) {
-    this.created.push(create)
+    if (this.message.created == null) this.message.created = []
+    this.message.created.push(create)
     // this.wakeup() not needed, since this is part of data packing.
   }
 
@@ -148,7 +153,8 @@ export class BridgeState implements ObjectTable {
       name,
       ...packData(this, args)
     }
-    this.calls.push(message)
+    if (this.message.calls == null) this.message.calls = []
+    this.message.calls.push(message)
     this.wakeup()
 
     return new Promise((resolve, reject) => {
@@ -165,7 +171,8 @@ export class BridgeState implements ObjectTable {
       name,
       ...packData(this, payload)
     }
-    this.events.push(message)
+    if (this.message.events == null) this.message.events = []
+    this.message.events.push(message)
     this.wakeup()
   }
 
@@ -177,20 +184,31 @@ export class BridgeState implements ObjectTable {
       callId,
       ...(fail ? packThrow(this, value) : packData(this, value))
     }
-    this.returns.push(message)
+    if (this.message.returns == null) this.message.returns = []
+    this.message.returns.push(message)
     this.wakeup()
   }
 
   /**
-   * Clears everything scheduled to be sent in the next message.
+   * Sends the current message.
    */
-  messageSent () {
+  sendNow () {
+    // Build change messages:
+    for (const id in this.dirty) {
+      const localId = Number(id)
+      const o = this.objects[localId]
+      const { dirty, props } = diffObject(this, o, this.caches[localId])
+      if (dirty) {
+        const message: ChangeMessage = { localId, props }
+        if (this.message.changed == null) this.message.changed = []
+        this.message.changed.push(message)
+      }
+    }
+
+    const message = this.message
     this.dirty = {}
-    this.closed = []
-    this.created = []
-    this.calls = []
-    this.returns = []
-    this.events = []
+    this.message = {}
+    this.sendMessage(message)
   }
 
   /**
@@ -203,7 +221,7 @@ export class BridgeState implements ObjectTable {
     const task = () => {
       this.sendPending = false
       this.lastUpdate = Date.now()
-      this.sendMessage(makeMessage(this))
+      this.sendNow()
     }
 
     // We really do want `setTimeout` here, even if the delay is 0,

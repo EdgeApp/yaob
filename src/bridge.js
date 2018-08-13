@@ -2,7 +2,7 @@
 
 import { packData, unpackData } from './data.js'
 import { addListener } from './manage.js'
-import { type Message, handleMessage, makeMessage } from './messages.js'
+import { type Message, handleMessage } from './messages.js'
 import { BridgeState } from './state.js'
 
 /**
@@ -87,6 +87,6 @@ export function makeLocalBridge<T> (o: T, opts: LocalBridgeOptions = {}): T {
   })
 
   const data = packData(serverState, o)
-  serverState.sendMessage(makeMessage(serverState))
+  serverState.sendNow()
   return unpackData(clientState, data, 'root')
 }

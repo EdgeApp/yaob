@@ -2,12 +2,7 @@
 
 import { type PackedData, unpackData } from './data.js'
 import { closeObject, emitEvent } from './manage.js'
-import {
-  type ChangeEvent,
-  diffObject,
-  makeProxy,
-  updateObjectProps
-} from './objects.js'
+import { type ChangeEvent, makeProxy, updateObjectProps } from './objects.js'
 import type { BridgeState } from './state.js'
 
 /**
@@ -188,32 +183,4 @@ export function handleMessage (state: BridgeState, message: Message) {
       closeObject(o)
     }
   }
-}
-
-/**
- * Gathers pending events and bundles them into a message.
- */
-export function makeMessage (state: BridgeState): Message {
-  // Build change messages:
-  const changed: Array<ChangeMessage> = []
-  for (const id in state.dirty) {
-    const localId = Number(id)
-    const o = state.objects[localId]
-    const { dirty, props } = diffObject(state, o, state.caches[localId])
-    if (dirty) {
-      const message: ChangeMessage = { localId, props }
-      changed.push(message)
-    }
-  }
-
-  const out: Message = {}
-  if (changed.length) out.changed = changed
-  if (state.closed.length) out.closed = state.closed
-  if (state.created.length) out.created = state.created
-  if (state.calls.length) out.calls = state.calls
-  if (state.events.length) out.events = state.events
-  if (state.returns.length) out.returns = state.returns
-  state.messageSent()
-
-  return out
 }
