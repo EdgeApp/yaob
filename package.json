@@ -1,6 +1,6 @@
 {
   "name": "yaob",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Bridges an object-oriented API across a messaging layer",
   "license": "MIT",
   "files": [
