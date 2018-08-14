@@ -111,11 +111,13 @@ describe('bridging', function () {
 
   it('shared classes', function () {
     class SomeClass {
-      foo () {}
+      foo () {
+        return 12
+      }
     }
     const local = makeLocalBridge(new SomeClass(), { SomeClass })
     expect(local).instanceof(SomeClass)
-    expect(typeof local.foo).equals('function')
+    expect(local.foo()).equals(12)
   })
 
   it('preserves onMethod', async function () {
