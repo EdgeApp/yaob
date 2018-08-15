@@ -4,7 +4,7 @@ import type { BridgeOptions, SendMessage, SharedClasses } from './bridge.js'
 import { Bridgeable } from './bridgeable.js'
 import { type ObjectTable, packData, packThrow, unpackData } from './data.js'
 import { bridgifyClass, getInstanceMagic, shareClass } from './magic.js'
-import { closeObject, emitEvent } from './manage.js'
+import { closeObject, emitEvent, updateObject } from './manage.js'
 import type {
   CallMessage,
   ChangeMessage,
@@ -227,6 +227,7 @@ export class BridgeState implements ObjectTable {
         }
         const newEvents = updateObjectProps(this, o, props)
         events = events.concat(newEvents)
+        updateObject(o)
       }
 
       // Pass 2: Fire the callbacks:

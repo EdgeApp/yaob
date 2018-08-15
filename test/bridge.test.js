@@ -136,4 +136,38 @@ describe('bridging', function () {
     await delay(10)
     log.assert(['got event 1'])
   })
+
+  it('bridges proxies', async function () {
+    const log = makeAssertLog()
+    class SomeClass extends Bridgeable<{ event: number }> {
+      _flag: boolean
+
+      constructor () {
+        super()
+        this._flag = false
+      }
+
+      get flag () {
+        return this._flag
+      }
+
+      foo () {
+        this._flag = true
+        this.update()
+        return 'bar'
+      }
+    }
+
+    // Note that `makeLocalBridge` happens twice here:
+    const remote = new SomeClass()
+    const local = makeLocalBridge(makeLocalBridge(remote))
+    expect(local.flag).equals(false)
+    local.on('event', x => log('got event', x))
+
+    // Quickly try the basics:
+    remote.emit('event', 1)
+    expect(await local.foo()).equals('bar')
+    expect(local.flag).equals(true)
+    log.assert(['got event 1'])
+  })
 })
