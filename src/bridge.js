@@ -2,7 +2,7 @@
 
 import { packData, unpackData } from './data.js'
 import { addListener } from './manage.js'
-import { type Message, handleMessage } from './messages.js'
+import { type Message } from './messages.js'
 import { BridgeState } from './state.js'
 
 /**
@@ -48,7 +48,7 @@ export class Bridge {
   }
 
   handleMessage (message: Message): mixed {
-    handleMessage(this._state, message)
+    this._state.handleMessage(message)
   }
 
   getRoot () {
@@ -73,14 +73,14 @@ export function makeLocalBridge<T> (o: T, opts: LocalBridgeOptions = {}): T {
 
   const serverState = new BridgeState({
     sendMessage (message) {
-      handleMessage(clientState, cloneMessage(message))
+      clientState.handleMessage(cloneMessage(message))
     },
     sharedClasses,
     throttleMs
   })
   const clientState = new BridgeState({
     sendMessage (message) {
-      handleMessage(serverState, cloneMessage(message))
+      serverState.handleMessage(cloneMessage(message))
     },
     sharedClasses,
     throttleMs
