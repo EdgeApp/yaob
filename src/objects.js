@@ -12,7 +12,7 @@ import {
   getInstanceMagic,
   makeProxyMagic
 } from './magic.js'
-import type { CreateMessage, PackedProps } from './messages.js'
+import type { CreateMessage, PackedProps } from './protocol.js'
 import type { BridgeState } from './state.js'
 
 export type ValueCache = { [name: string]: mixed }
