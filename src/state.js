@@ -1,10 +1,9 @@
 // @flow
 
-import type { BridgeOptions, SendMessage, SharedClasses } from './bridge.js'
-import { Bridgeable } from './bridgeable.js'
+import type { BridgeOptions, SendMessage } from './bridge.js'
 import { type ObjectTable, packData, packThrow, unpackData } from './data.js'
-import { bridgifyClass, getInstanceMagic, shareClass } from './magic.js'
-import { closeObject, emitEvent, updateObject } from './manage.js'
+import { bridgifyClass, getInstanceMagic } from './magic.js'
+import { close, emit, update } from './manage.js'
 import type {
   CallMessage,
   ChangeMessage,
@@ -14,7 +13,6 @@ import type {
   ReturnMessage
 } from './messages.js'
 import {
-  type ChangeEvent,
   type ValueCache,
   diffObject,
   dirtyValue,
@@ -25,7 +23,6 @@ import {
 
 export class BridgeState implements ObjectTable {
   // Objects:
-  +sharedClasses: SharedClasses
   +proxies: { [objectId: number]: Object }
   +objects: { [localId: number]: Object }
   +caches: { [localId: number]: ValueCache }
@@ -47,13 +44,9 @@ export class BridgeState implements ObjectTable {
   +sendMessage: SendMessage
 
   constructor (opts: BridgeOptions) {
-    const { sendMessage, sharedClasses = {}, throttleMs = 0 } = opts
+    const { sendMessage, throttleMs = 0 } = opts
 
     // Objects:
-    this.sharedClasses = sharedClasses
-    for (const name in sharedClasses) {
-      shareClass(sharedClasses[name], name)
-    }
     this.proxies = {}
     this.objects = {}
     this.caches = {}
@@ -71,18 +64,6 @@ export class BridgeState implements ObjectTable {
     this.lastUpdate = 0
     this.sendPending = false
     this.sendMessage = sendMessage
-  }
-
-  /**
-   * Returns a base class based on its name.
-   */
-  getBase (base?: string): Function {
-    const table = { Bridgeable }
-
-    if (base == null) return Object
-    if (this.sharedClasses[base] != null) return this.sharedClasses[base]
-    if (table[base] != null) return table[base]
-    throw new RangeError(`Cannot find shared base class ${base}`)
   }
 
   /**
@@ -218,22 +199,18 @@ export class BridgeState implements ObjectTable {
     // Handle updated objects:
     if (message.changed) {
       // Pass 1: Update all the proxies:
-      let events: Array<ChangeEvent> = []
       for (const change of message.changed) {
         const { localId, props } = change
         const o = this.proxies[localId]
         if (o == null) {
           throw new RangeError(`Invalid localId ${localId}`)
         }
-        const newEvents = updateObjectProps(this, o, props)
-        events = events.concat(newEvents)
-        updateObject(o)
+        updateObjectProps(this, o, props)
       }
 
       // Pass 2: Fire the callbacks:
-      for (const event of events) {
-        const { proxy, name, payload } = event
-        emitEvent(proxy, name, payload)
+      for (const change of message.changed) {
+        update(this.proxies[change.localId])
       }
     }
 
@@ -248,9 +225,9 @@ export class BridgeState implements ObjectTable {
         const o = localId === 0 ? this : this.proxies[localId]
         if (o == null) continue
         try {
-          emitEvent(o, name, unpackData(this, event, name))
+          emit(o, name, unpackData(this, event, name))
         } catch (e) {
-          emitEvent(o, 'error', e) // Payload unpacking problem
+          emit(o, 'error', e) // Payload unpacking problem
         }
       }
     }
@@ -308,7 +285,7 @@ export class BridgeState implements ObjectTable {
         const o = this.proxies[localId]
         if (o == null) return
         delete this.proxies[localId]
-        closeObject(o)
+        close(o)
       }
     }
   }

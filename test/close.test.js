@@ -3,24 +3,27 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { Bridgeable, closeObject } from '../src/index.js'
+import { Bridgeable, close, shareData } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
 
-class ChildBase extends Bridgeable<> {
+class ChildApi extends Bridgeable<> {
+  get answer () {
+    return 42
+  }
+
+  async asyncMethod (x: number) {
+    return x * 3
+  }
+
   syncMethod (x: number) {
     return x * 2
   }
 }
 
-class ChildApi extends ChildBase {
-  get answer () {
-    return 42
-  }
-  async asyncMethod (x: number) {
-    return x * 3
-  }
-}
+shareData({
+  'ChildApi.syncMethod': ChildApi.prototype.syncMethod
+})
 
 class ParentApi extends Bridgeable<> {
   async makeChild () {
@@ -28,25 +31,14 @@ class ParentApi extends Bridgeable<> {
   }
 
   async closeChild (child: ChildApi) {
-    closeObject(child)
+    close(child)
   }
 }
 
 function checkDestruction (child: ChildApi): Promise<mixed> {
-  function f (bogus) {}
-
-  // Client-side methods work:
+  // Client-side methods & properties work:
   expect(child.syncMethod(1.5)).equals(3)
-
-  // Remote property access fails:
-  try {
-    f(child.answer)
-    throw new Error('should throw')
-  } catch (e) {
-    expect(e.toString()).equals(
-      "TypeError: Cannot read property 'answer' of deleted proxy"
-    )
-  }
+  expect(child.answer).equals(42)
 
   // Remote method call fails:
   return promiseFail(
@@ -59,12 +51,11 @@ describe('closing', function () {
   it('remote closure', async function () {
     const log = makeAssertLog()
     const remote = new ParentApi()
-    const local = await makeLoggedBridge(log, remote, { ChildBase })
+    const local = await makeLoggedBridge(log, remote)
     const child = await local.makeChild()
     log.assert(['server +1 e1', 'client c1', 'server +1 r1'])
 
     // We can call child methods:
-    expect(child).instanceof(ChildBase)
     expect(await child.asyncMethod(1.5)).equals(4.5)
     log.assert(['client c1', 'server r1'])
 
@@ -77,12 +68,12 @@ describe('closing', function () {
   it('client-side closure', async function () {
     const log = makeAssertLog()
     const remote = new ParentApi()
-    const local = await makeLoggedBridge(log, remote, { ChildBase })
+    const local = await makeLoggedBridge(log, remote)
     const child = await local.makeChild()
     log.assert(['server +1 e1', 'client c1', 'server +1 r1'])
 
     // Deleting local proxies disables property access:
-    closeObject(child)
+    close(child)
     await checkDestruction(child)
     await delay(10)
     log.assert([])
@@ -98,11 +89,11 @@ describe('closing', function () {
   it('server closure', async function () {
     const log = makeAssertLog()
     const remote = new ChildApi()
-    const local = await makeLoggedBridge(log, remote, { ChildBase })
+    const local = await makeLoggedBridge(log, remote)
     log.assert(['server +1 e1'])
 
     // The server closes the object on its own initiative:
-    closeObject(remote)
+    close(remote)
     await delay(10)
     await checkDestruction(local)
     log.assert(['server -1'])

@@ -11,16 +11,10 @@ import { BridgeState } from './state.js'
 export type SendMessage = (message: Object) => mixed
 
 /**
- * A table of classes shared between the client and the server.
- */
-export type SharedClasses = { [name: string]: Function }
-
-/**
  * Options used to create a new bridge.
  */
 export type BridgeOptions = {
   sendMessage: SendMessage,
-  sharedClasses?: SharedClasses,
   throttleMs?: number
 }
 
@@ -29,7 +23,6 @@ export type BridgeOptions = {
  */
 export type LocalBridgeOptions = {
   cloneMessage?: (x: Object) => Object,
-  sharedClasses?: SharedClasses,
   throttleMs?: number
 }
 
@@ -69,24 +62,22 @@ export function makeLocalBridge<T> (o: T, opts: LocalBridgeOptions = {}): T {
   function nopClone (m: Object): Object {
     return m
   }
-  const { cloneMessage = nopClone, sharedClasses = {}, throttleMs } = opts
+  const { cloneMessage = nopClone, throttleMs } = opts
 
   const serverState = new BridgeState({
     sendMessage (message) {
       clientState.handleMessage(cloneMessage(message))
     },
-    sharedClasses,
     throttleMs
   })
   const clientState = new BridgeState({
     sendMessage (message) {
       serverState.handleMessage(cloneMessage(message))
     },
-    sharedClasses,
     throttleMs
   })
 
   const data = cloneMessage(packData(serverState, o))
   serverState.sendNow()
-  return unpackData(clientState, data, 'root')
+  return unpackData(clientState, cloneMessage(data), 'root')
 }
