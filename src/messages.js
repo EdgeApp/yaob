@@ -29,8 +29,6 @@ export type ChangeMessage = {
  */
 export type CreateMessage = {
   localId: number,
-  base?: string,
-  on?: Array<string>,
   methods: Array<string>,
   props: PackedProps
 }

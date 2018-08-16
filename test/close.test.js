@@ -3,24 +3,27 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { Bridgeable, close } from '../src/index.js'
+import { Bridgeable, close, shareData } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
 
-class ChildBase extends Bridgeable<> {
+class ChildApi extends Bridgeable<> {
+  get answer () {
+    return 42
+  }
+
+  async asyncMethod (x: number) {
+    return x * 3
+  }
+
   syncMethod (x: number) {
     return x * 2
   }
 }
 
-class ChildApi extends ChildBase {
-  get answer () {
-    return 42
-  }
-  async asyncMethod (x: number) {
-    return x * 3
-  }
-}
+shareData({
+  'ChildApi.syncMethod': ChildApi.prototype.syncMethod
+})
 
 class ParentApi extends Bridgeable<> {
   async makeChild () {
@@ -48,12 +51,11 @@ describe('closing', function () {
   it('remote closure', async function () {
     const log = makeAssertLog()
     const remote = new ParentApi()
-    const local = await makeLoggedBridge(log, remote, { ChildBase })
+    const local = await makeLoggedBridge(log, remote)
     const child = await local.makeChild()
     log.assert(['server +1 e1', 'client c1', 'server +1 r1'])
 
     // We can call child methods:
-    expect(child).instanceof(ChildBase)
     expect(await child.asyncMethod(1.5)).equals(4.5)
     log.assert(['client c1', 'server r1'])
 
@@ -66,7 +68,7 @@ describe('closing', function () {
   it('client-side closure', async function () {
     const log = makeAssertLog()
     const remote = new ParentApi()
-    const local = await makeLoggedBridge(log, remote, { ChildBase })
+    const local = await makeLoggedBridge(log, remote)
     const child = await local.makeChild()
     log.assert(['server +1 e1', 'client c1', 'server +1 r1'])
 
@@ -87,7 +89,7 @@ describe('closing', function () {
   it('server closure', async function () {
     const log = makeAssertLog()
     const remote = new ChildApi()
-    const local = await makeLoggedBridge(log, remote, { ChildBase })
+    const local = await makeLoggedBridge(log, remote)
     log.assert(['server +1 e1'])
 
     // The server closes the object on its own initiative:

@@ -5,7 +5,6 @@
  * and then restoring those messages into proxies on the other side.
  */
 
-import { onMethod } from './bridgeable.js'
 import { packData, packThrow, unpackData } from './data.js'
 import {
   MAGIC_KEY,
@@ -38,42 +37,33 @@ export function packObject (
   cache: ValueCache,
   create: CreateMessage
 } {
+  // Iterate the prototype chain, looking for property names:
   const allNames: { [name: string]: true } = {}
-  function addNames (o: Object) {
-    for (const name of Object.getOwnPropertyNames(o)) {
+  const end = Object.prototype
+  for (let p = o; p !== end && p != null; p = Object.getPrototypeOf(p)) {
+    for (const name of Object.getOwnPropertyNames(p)) {
       if (name !== MAGIC_KEY && !/^_/.test(name) && name !== 'constructor') {
         allNames[name] = true
       }
     }
   }
 
-  // Iterate the prototype chain, looking for property names:
-  let base: string | void
-  const end = Object.prototype
-  for (let p = o; p !== end && p != null; p = Object.getPrototypeOf(p)) {
-    if (Object.prototype.hasOwnProperty.call(p, MAGIC_KEY)) {
-      if (p[MAGIC_KEY].base != null) {
-        base = p[MAGIC_KEY].base
-        break
-      }
-    }
-    addNames(p)
-  }
-
   // Iterate over the object's properties and add their names to
   // the method list or the value cache.
   const cache: ValueCache = {}
-  const on: Array<string> = []
   const methods: Array<string> = []
   const props: PackedProps = {}
   for (const n in allNames) {
     try {
-      const value = o[n]
-      if (value === onMethod) on.push(n)
-      if (typeof value === 'function') methods.push(n)
-      else {
-        cache[n] = value
-        props[n] = packData(state, value)
+      const data = o[n]
+      if (
+        typeof data === 'function' &&
+        (data[MAGIC_KEY] == null || data[MAGIC_KEY].shareId == null)
+      ) {
+        methods.push(n)
+      } else {
+        cache[n] = data
+        props[n] = packData(state, data)
       }
     } catch (e) {
       cache[n] = dirtyValue
@@ -83,8 +73,6 @@ export function packObject (
 
   const { localId } = getInstanceMagic(o)
   const create: CreateMessage = { localId, methods, props }
-  if (base != null) create.base = base
-  if (on.length !== 0) create.on = on
   return { cache, create }
 }
 
@@ -138,18 +126,9 @@ export function makeProxy (state: BridgeState, create: CreateMessage): Object {
   for (const n of create.methods) {
     props[n] = { value: makeProxyMethod(state, magic, n) }
   }
-  if (create.on != null) {
-    for (const n of create.on) {
-      props[n] = { value: onMethod }
-    }
-  }
 
   // Make the object:
-  const Base = state.getBase(create.base)
-  const object = Object.create(Base.prototype, props)
-  Base.call(object)
-
-  return object
+  return Object.create(Object.prototype, props)
 }
 
 /**
@@ -161,12 +140,11 @@ export function updateObjectProps (
   props: PackedProps
 ): Array<ChangeEvent> {
   const magic: ProxyMagic = o[MAGIC_KEY]
-  const path = magic.base || '<proxy>'
 
   const out: Array<ChangeEvent> = []
   for (const n in props) {
     try {
-      magic.props[n] = unpackData(state, props[n], `${path}.${n}`)
+      magic.props[n] = unpackData(state, props[n], n)
       magic.errors[n] = false
       out.push({ proxy: o, name: n + 'Changed', payload: magic.props[n] })
     } catch (e) {

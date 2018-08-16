@@ -1,9 +1,8 @@
 // @flow
 
-import type { BridgeOptions, SendMessage, SharedClasses } from './bridge.js'
-import { Bridgeable } from './bridgeable.js'
+import type { BridgeOptions, SendMessage } from './bridge.js'
 import { type ObjectTable, packData, packThrow, unpackData } from './data.js'
-import { bridgifyClass, getInstanceMagic, shareClass } from './magic.js'
+import { bridgifyClass, getInstanceMagic } from './magic.js'
 import { close, emit, update } from './manage.js'
 import type {
   CallMessage,
@@ -25,7 +24,6 @@ import {
 
 export class BridgeState implements ObjectTable {
   // Objects:
-  +sharedClasses: SharedClasses
   +proxies: { [objectId: number]: Object }
   +objects: { [localId: number]: Object }
   +caches: { [localId: number]: ValueCache }
@@ -47,13 +45,9 @@ export class BridgeState implements ObjectTable {
   +sendMessage: SendMessage
 
   constructor (opts: BridgeOptions) {
-    const { sendMessage, sharedClasses = {}, throttleMs = 0 } = opts
+    const { sendMessage, throttleMs = 0 } = opts
 
     // Objects:
-    this.sharedClasses = sharedClasses
-    for (const name in sharedClasses) {
-      shareClass(sharedClasses[name], name)
-    }
     this.proxies = {}
     this.objects = {}
     this.caches = {}
@@ -71,18 +65,6 @@ export class BridgeState implements ObjectTable {
     this.lastUpdate = 0
     this.sendPending = false
     this.sendMessage = sendMessage
-  }
-
-  /**
-   * Returns a base class based on its name.
-   */
-  getBase (base?: string): Function {
-    const table = { Bridgeable }
-
-    if (base == null) return Object
-    if (this.sharedClasses[base] != null) return this.sharedClasses[base]
-    if (table[base] != null) return table[base]
-    throw new RangeError(`Cannot find shared base class ${base}`)
   }
 
   /**

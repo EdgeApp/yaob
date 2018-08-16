@@ -13,15 +13,12 @@ export const MAGIC_KEY = '_yaob'
 /**
  * Magic data used to mark classes as bridgeable.
  */
-export type ClassMagic = {
-  // This level of the prototype chain is a shared class when set:
-  +base?: string
-}
+export type ClassMagic = {}
 
 /**
  * Magic data shared by all object instances.
  */
-export type ObjectMagic = ClassMagic & {
+type ObjectMagic = {
   // The object id on this side of the bridge:
   +localId: number,
 
@@ -56,12 +53,20 @@ export type ProxyMagic = ObjectMagic & {
   +props: { [name: string]: mixed }
 }
 
+/**
+ * Magic data found on shared props.
+ */
+export type SharedMagic = {
+  +shareId: string
+}
+
 let nextLocalId = 1
+export const sharedData: { [sharedId: string]: mixed } = {}
 
 /**
  * Adds or updates an object's magic data.
  */
-function addMagic (o: Object, magic: ClassMagic) {
+function addMagic (o: Object, magic: ClassMagic | ObjectMagic | SharedMagic) {
   if (Object.prototype.hasOwnProperty.call(o, MAGIC_KEY)) {
     Object.assign(o[MAGIC_KEY], magic)
   } else {
@@ -124,9 +129,22 @@ export function makeProxyMagic (remoteId: number): ProxyMagic {
   }
 }
 
-export function shareClass (Class: Function, name: string): mixed {
-  const magic: ClassMagic = {
-    base: name
+/**
+ * Adds items to the global shared data table.
+ */
+export function shareData (
+  table: { [name: string]: Object },
+  namespace?: string
+) {
+  if (namespace == null) namespace = ''
+  else namespace += '.'
+
+  for (const n of Object.getOwnPropertyNames(table)) {
+    const shareId = namespace + n
+    if (sharedData[shareId] != null) {
+      throw new Error(`A shared value named ${shareId} already exists`)
+    }
+    sharedData[shareId] = table[n]
+    addMagic(table[n], { shareId })
   }
-  addMagic(Class.prototype, magic)
 }

@@ -191,33 +191,36 @@ const testApi = makeLocalBridge(new MyApi(), {
 
 This makes it possible to incorporate realistic message serialization and deserialization into the test.
 
-### Shared Base Classes
+### Shared Methods
 
-Both the `Bridge` constructor and `makeLocalBridge` function accept an optional `sharedClasses` parameter, which is a table of constructor functions. If an object extends one of these base classes on the server side, the bridge will ensure that it also extends the same class on the client side:
+Bridges normally forward method calls to the original object. Sometimes, though, it's useful to have synchronous methods that run directly on the client side without bridging. The `shareData` function makes this possible:
 
 ```js
-class BaseClass extends Bridgeable {
-  double (x) {
+import { Bridgeable, shareData } from 'yaob'
+
+class SomeApi extends Bridgeable {
+  syncMethod (x) {
     return 2 * x
   }
 }
 
-class SomeApi extends BaseClass { ... }
-
-const local = makeLocalBridge(new SomeApi(), {
-  sharedClasses: { BaseClass }
+// Share the method with the client:
+shareData({
+  'SomeApi.syncMethod': SomeApi.prototype.syncMethod
 })
 
-// The `instanceof` operator works:
-expect(local).instanceof(BaseClass)
+// Send the object over a bridge:
+const local = makeLocalBridge(new SomeApi())
 
 // No `await` needed!
 expect(local.double(3)).equals(6)
 ```
 
-This provides a way to put synchronous methods on your API objects. Just put the methods in the shared base class, and they will exist on both sides of the bridge. Note that these methods will *not* be able to access properties or methods that begin with underscores, since those aren't bridged. The synchronous methods can only access whatever public API the client side could access anyhow.
+Since shared methods run on the client side, they can only access whatever public API the client side could access anyhow. In particular, this means they cannot access private class members that begin with underscores, since those aren't bridged.
 
-The `Bridge` constructors on both sides of a messaging interface need to receive the same `sharedClasses` table for this to work properly.
+Both the client and the server keep matching tables of shared data. When the server encounters a shared value, it sends value's name to the client, who looks up the equivalent value in its table. This means that every shared value must have a unique name, such as the `'SomeApi.syncMethod'` name given in the example above.
+
+Adding items to the shared table is only effective at library load time. Otherwise, bundling tools like rollup.js will not copy the values into the client-side code bundle.
 
 ### Throttling
 
@@ -240,7 +243,6 @@ The easiest way to make your object bridgeable is to extend the `Bridgeable` bas
 
 * Call `bridgifyClass` on a class constructor function. Any instances of this class will be bridgeable.
 * Call `bridgifyObject` directly on an object.
-* Put your base class in the `sharedClasses` object. All these classes are automatically bridgeable, even if they don't inherit from `Bridgeable`.
 
 You might use one of these other options if you don't control your class hierarchy, for instance. All the `Bridgeable` methods have standalone versions, so their functionality is available even if your class doesn't extend `Bridgeable`:
 

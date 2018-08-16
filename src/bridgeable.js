@@ -1,6 +1,6 @@
 // @flow
 
-import { bridgifyClass } from './magic.js'
+import { bridgifyClass, shareData } from './magic.js'
 import type { OnMethod } from './manage.js'
 import { addListener, close, emit, update } from './manage.js'
 
@@ -11,6 +11,8 @@ import { addListener, close, emit, update } from './manage.js'
 export const onMethod: Function = function on (name, f) {
   return addListener(this, name, f)
 }
+
+shareData({ onMethod })
 
 /**
  * The base class for all bridgeable API's. Provides callback capability.

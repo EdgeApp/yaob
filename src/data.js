@@ -5,7 +5,7 @@
  * and then restoring those messages into values on the other side.
  */
 
-import { MAGIC_KEY } from './magic.js'
+import { MAGIC_KEY, sharedData } from './magic.js'
 
 /**
  * The data-packing system uses this interface to turn
@@ -29,6 +29,7 @@ export type DataMap =
   | '?' // Invalid value
   | 'e' // Error
   | 'o' // Object
+  | 's' // Shared data
   | 'u' // Undefined
 
 /**
@@ -112,7 +113,9 @@ function mapData (table: ObjectTable, data: mixed): DataMap {
     case 'object':
       if (data === null) return ''
       if (data instanceof Error) return 'e'
-      if (data[MAGIC_KEY] != null) return 'o'
+      if (data[MAGIC_KEY] != null) {
+        return data[MAGIC_KEY].shareId != null ? 's' : 'o'
+      }
 
       // Arrays:
       if (Array.isArray(data)) {
@@ -141,6 +144,11 @@ function mapData (table: ObjectTable, data: mixed): DataMap {
 
     case 'undefined':
       return 'u'
+
+    case 'function':
+      return data[MAGIC_KEY] != null && data[MAGIC_KEY].shareId != null
+        ? 's'
+        : '?'
 
     default:
       return '?'
@@ -183,6 +191,9 @@ function packItem (table: ObjectTable, map: DataMap, data: any): JsonValue {
 
     case 'o':
       return table.getPackedId(data)
+
+    case 's':
+      return data[MAGIC_KEY].shareId
 
     case 'u':
       return null
@@ -267,6 +278,14 @@ function unpackItem (
       const o = table.getObject(-raw)
       if (o == null) throw new RangeError(`Invalid packedId at ${path}`)
       return o
+
+    case 's':
+      if (typeof raw !== 'string') {
+        throw new TypeError(`Expecting a shareId at ${path}`)
+      }
+      const s = sharedData[raw]
+      if (s == null) throw new RangeError(`Invalid shareId at ${path}`)
+      return s
 
     case 'u':
       return void 0
