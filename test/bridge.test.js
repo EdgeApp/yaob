@@ -51,6 +51,27 @@ describe('bridging', function () {
     expect(local.self).equals(local)
   })
 
+  it('filters private members', async function () {
+    class SomeClass extends Bridgeable<> {
+      prop: number
+      _prop: number
+
+      constructor () {
+        super()
+        this.prop = 1
+        this._prop = 2
+      }
+
+      method () {}
+      _method () {}
+    }
+    const local = makeLocalBridge(new SomeClass())
+    expect(local.method).is.a('function')
+    expect(local.prop).equals(1)
+    expect(local).to.not.have.property('_method')
+    expect(local).to.not.have.property('_prop')
+  })
+
   it('calls methods', async function () {
     const log = makeAssertLog()
     class MethodApi extends Bridgeable<> {
@@ -140,19 +161,15 @@ describe('bridging', function () {
   it('bridges proxies', async function () {
     const log = makeAssertLog()
     class SomeClass extends Bridgeable<{ event: number }> {
-      _flag: boolean
+      flag: boolean
 
       constructor () {
         super()
-        this._flag = false
-      }
-
-      get flag () {
-        return this._flag
+        this.flag = false
       }
 
       foo () {
-        this._flag = true
+        this.flag = true
         this.update()
         return 'bar'
       }

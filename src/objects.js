@@ -41,7 +41,9 @@ export function packObject (
   const allNames: { [name: string]: true } = {}
   function addNames (o: Object) {
     for (const name of Object.getOwnPropertyNames(o)) {
-      if (name !== MAGIC_KEY && name !== 'constructor') allNames[name] = true
+      if (name !== MAGIC_KEY && !/^_/.test(name) && name !== 'constructor') {
+        allNames[name] = true
+      }
     }
   }
 
@@ -50,7 +52,6 @@ export function packObject (
   const end = Object.prototype
   for (let p = o; p !== end && p != null; p = Object.getPrototypeOf(p)) {
     if (Object.prototype.hasOwnProperty.call(p, MAGIC_KEY)) {
-      if (p[MAGIC_KEY].skip) continue
       if (p[MAGIC_KEY].base != null) {
         base = p[MAGIC_KEY].base
         break

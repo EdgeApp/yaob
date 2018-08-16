@@ -15,10 +15,7 @@ export const MAGIC_KEY = '_yaob'
  */
 export type ClassMagic = {
   // This level of the prototype chain is a shared class when set:
-  +base?: string,
-
-  // Do not proxy the items at this level of the prototype chain when set:
-  skip?: true
+  +base?: string
 }
 
 /**
@@ -91,7 +88,12 @@ export function bridgifyObject (o: Object): mixed {
     !Object.prototype.hasOwnProperty.call(o, MAGIC_KEY) ||
     o[MAGIC_KEY].localId == null
   ) {
-    addMagic(o, makeObjectMagic(o, false))
+    const magic: InstanceMagic = {
+      localId: nextLocalId++,
+      bridges: [],
+      listeners: {}
+    }
+    addMagic(o, magic)
   }
 }
 
@@ -102,28 +104,8 @@ export function getInstanceMagic (o: Object): InstanceMagic {
   // We only want to look at bridgeable objects:
   if (o[MAGIC_KEY] == null) throw new TypeError('Not a bridgeable object')
 
-  // Create local magic if we don't already have it:
-  if (
-    !Object.prototype.hasOwnProperty.call(o, MAGIC_KEY) ||
-    o[MAGIC_KEY].localId == null
-  ) {
-    addMagic(o, makeObjectMagic(o, true))
-  }
-
+  bridgifyObject(o)
   return o[MAGIC_KEY]
-}
-
-/**
- * Creates a new `InstanceMagic` object for local objects.
- */
-function makeObjectMagic (o: Object, skip: boolean): InstanceMagic {
-  const out: InstanceMagic = {
-    localId: nextLocalId++,
-    bridges: [],
-    listeners: {}
-  }
-  if (skip) out.skip = true
-  return out
 }
 
 /**

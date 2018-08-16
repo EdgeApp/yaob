@@ -43,7 +43,7 @@ class WorkerApi extends Bridgeable {
 }
 ```
 
-The `yaob` library will bridge class properties, such as methods and getters, but not instance properties. This means that `this._multiplier` will not be visible to the client. The client will only see the `double` method and the `version` getter. If you need to expose instance properties to your users, just provide the appropriate getters.
+The `yaob` library will not bridge property or method names that begin with an underscore. This means that `this._multiplier` will not be visible to the client. The client will only see the `double` method and the `version` getter. This provides a simple way to make things private.
 
 ### Server Side
 
@@ -101,7 +101,7 @@ expect(await root.double(1.5)).equals(3)
 // Property access is synchronous!
 expect(root.version).equals('1.0.0')
 
-// Instance variables are not visible:
+// Private properties are not visible:
 expect(root).to.not.have.property('_multiplier')
 ```
 
@@ -114,15 +114,11 @@ The bridge compares the object's properties shallowly (`===`). This means `yaob`
 ```js
 class ListExample extends Bridgeable {
   constructor () {
-    this._list = []
-  }
-
-  get list () {
-    return this._list
+    this.list = []
   }
 
   async addItem (item) {
-    this._list.push(item)
+    this.list.push(item)
 
     // Explicitly send the `list` property over the bridge:
     this.update('list')
@@ -217,7 +213,7 @@ expect(local).instanceof(BaseClass)
 expect(local.double(3)).equals(6)
 ```
 
-This provides a way to put synchronous methods on your API objects. Just put the methods in the shared base class, and they will exist on both sides of the bridge. Note that these methods will *not* be able to access instance properties, since those aren't bridged. The synchronous methods can only access whatever public API the client side could access anyhow.
+This provides a way to put synchronous methods on your API objects. Just put the methods in the shared base class, and they will exist on both sides of the bridge. Note that these methods will *not* be able to access properties or methods that begin with underscores, since those aren't bridged. The synchronous methods can only access whatever public API the client side could access anyhow.
 
 The `Bridge` constructors on both sides of a messaging interface need to receive the same `sharedClasses` table for this to work properly.
 
@@ -241,7 +237,7 @@ const server = new Bridge({
 The easiest way to make your object bridgeable is to inherit from the `Bridgeable` base class. If you need more control though, `yaob` provides other options:
 
 * Call `bridgifyClass` on a class constructor function. Any instances of this class will be bridgeable.
-* Call `bridgifyObject` directly on an object. This will make the object bridgeable, and will *also* bridge the instance properties.
+* Call `bridgifyObject` directly on an object.
 * Put your base class in the `sharedClasses` object. All these classes are automatically bridgeable, even if they don't inherit from `Bridgeable`.
 
 You might use one of these other options if you don't control your class hierarchy, or if you don't want to expose all the methods from the `Bridgeable` base class to your API users. Even without the methods from the `Bridgeable` base class, you can still access the same functionality using the following substitutes:

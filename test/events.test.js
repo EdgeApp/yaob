@@ -7,7 +7,7 @@ import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge } from './utils/utils.js'
 
 describe('events', function () {
-  it('bridgeable', function () {
+  it('work locally', function () {
     const log = makeAssertLog({ sort: true })
     const p: Bridgeable<{
       bar: number,
@@ -40,7 +40,7 @@ describe('events', function () {
     log.assert(['Error: blew up'])
   })
 
-  it('bridged', async function () {
+  it('work over a bridge', async function () {
     const log = makeAssertLog()
     class EventApi extends Bridgeable<{
       event: string

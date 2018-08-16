@@ -11,26 +11,22 @@ describe('updating', function () {
   it('simple mutation', async function () {
     const log = makeAssertLog()
     class MutationApi extends Bridgeable<{ countChanged: number }> {
-      _count: number
+      count: number
 
       constructor () {
         super()
-        this._count = 0
-      }
-
-      get count () {
-        return this._count
+        this.count = 0
       }
 
       increment (step: number) {
-        this._count = this._count + step
+        this.count = this.count + step
         updateObject(this)
-        return this._count
+        return this.count
       }
 
       incrementWithoutUpdate (step: number) {
-        this._count = this._count + step
-        return this._count
+        this.count = this.count + step
+        return this.count
       }
     }
 
@@ -61,32 +57,28 @@ describe('updating', function () {
   it('deep mutation', async function () {
     const log = makeAssertLog()
     class MutationApi extends Bridgeable<{ listChanged: Array<number> }> {
-      _list: Array<number>
+      list: Array<number>
 
       constructor () {
         super()
-        this._list = []
-      }
-
-      get list () {
-        return this._list
+        this.list = []
       }
 
       push (item: number) {
-        this._list.push(item)
+        this.list.push(item)
         updateObject(this, 'list')
-        return this._list
+        return this.list
       }
 
       pushWithGeneralUpdate (item: number) {
-        this._list.push(item)
+        this.list.push(item)
         updateObject(this)
-        return this._list
+        return this.list
       }
 
       pushWithoutUpdate (item: number) {
-        this._list.push(item)
-        return this._list
+        this.list.push(item)
+        return this.list
       }
     }
 
