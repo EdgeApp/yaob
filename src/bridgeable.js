@@ -15,7 +15,7 @@ export class Bridgeable<Events = {}> {
     closeObject(this)
   }
 
-  update (name?: string) {
+  update (name?: *) {
     updateObject(this, name)
   }
 }

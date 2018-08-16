@@ -50,7 +50,7 @@ export function addListener (
  * The remote client will completely forget about this object,
  * and accessing it will become an error.
  */
-export function closeObject (o: Object) {
+export function closeObject (o: Object): mixed {
   const magic = getInstanceMagic(o)
 
   magic.closed = true
@@ -107,7 +107,7 @@ export const onMethod: Function = function onMethod (name, f) {
 /**
  * Marks an object as having changes. The proxy server will send an update.
  */
-export function updateObject (o: Object, name?: string) {
+export function updateObject<T: {}> (o: T, name?: $Keys<T>): mixed {
   const magic = getInstanceMagic(o)
 
   for (const bridge of magic.bridges) {
