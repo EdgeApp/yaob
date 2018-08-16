@@ -4,7 +4,7 @@ import { expect } from 'chai'
 
 import { Bridge, type SharedClasses } from '../../src/index.js'
 
-export function delay (ms: number) {
+export function delay (ms: number): Promise<mixed> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 

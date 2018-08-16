@@ -23,11 +23,8 @@ class ChildApi extends ChildBase {
 }
 
 class ParentApi extends Bridgeable<> {
-  _child: ChildApi
-
   async makeChild () {
-    this._child = new ChildApi()
-    return this._child
+    return new ChildApi()
   }
 
   async closeChild (child: ChildApi) {
@@ -58,7 +55,7 @@ function checkDestruction (child: ChildApi): Promise<mixed> {
   )
 }
 
-describe('closeObject', function () {
+describe('closing', function () {
   it('remote closure', async function () {
     const log = makeAssertLog()
     const remote = new ParentApi()

@@ -15,7 +15,7 @@ import {
 import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
 
-describe('local bridge', function () {
+describe('bridging', function () {
   it('maintains object identity', async function () {
     const log = makeAssertLog()
     class ChildApi extends Bridgeable<> {}
@@ -51,7 +51,7 @@ describe('local bridge', function () {
     expect(local.self).equals(local)
   })
 
-  it('method calls', async function () {
+  it('calls methods', async function () {
     const log = makeAssertLog()
     class MethodApi extends Bridgeable<> {
       simple (x: number) {
@@ -97,7 +97,7 @@ describe('local bridge', function () {
     }
     bridgifyClass(SomeClass)
     const local = makeLocalBridge(new SomeClass())
-    expect(typeof local.foo).equals('function')
+    expect(local.foo).is.a('function')
   })
 
   it('bridgifyObject', function () {
@@ -106,10 +106,10 @@ describe('local bridge', function () {
     }
     bridgifyObject(remote)
     const local = makeLocalBridge(remote)
-    expect(typeof local.foo).equals('function')
+    expect(local.foo).is.a('function')
   })
 
-  it('sharedClasses', function () {
+  it('shared classes', function () {
     class SomeClass {
       foo () {}
     }
@@ -118,7 +118,7 @@ describe('local bridge', function () {
     expect(typeof local.foo).equals('function')
   })
 
-  it('onMethod proxy', async function () {
+  it('preserves onMethod', async function () {
     const log = makeAssertLog()
     class SomeClass {
       on: OnMethod<{ event: number }>

@@ -7,7 +7,7 @@ import { Bridgeable, updateObject } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge } from './utils/utils.js'
 
-describe('update', function () {
+describe('updating', function () {
   it('simple mutation', async function () {
     const log = makeAssertLog()
     class MutationApi extends Bridgeable<{ countChanged: number }> {
