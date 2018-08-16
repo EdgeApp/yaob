@@ -8,7 +8,7 @@ import { BridgeState } from './state.js'
 /**
  * The bridge sends messages using this function.
  */
-export type SendMessage = (message: Message) => mixed
+export type SendMessage = (message: Object) => mixed
 
 /**
  * A table of classes shared between the client and the server.
@@ -28,7 +28,7 @@ export type BridgeOptions = {
  * Options used to create a new local bridge.
  */
 export type LocalBridgeOptions = {
-  cloneMessage?: (x: Message) => Message,
+  cloneMessage?: (x: Object) => Object,
   sharedClasses?: SharedClasses,
   throttleMs?: number
 }
@@ -66,7 +66,7 @@ export class Bridge {
  * but don't want to actually spawn a separate process.
  */
 export function makeLocalBridge<T> (o: T, opts: LocalBridgeOptions = {}): T {
-  function nopClone (m) {
+  function nopClone (m: Object): Object {
     return m
   }
   const { cloneMessage = nopClone, sharedClasses = {}, throttleMs } = opts
@@ -86,7 +86,7 @@ export function makeLocalBridge<T> (o: T, opts: LocalBridgeOptions = {}): T {
     throttleMs
   })
 
-  const data = packData(serverState, o)
+  const data = cloneMessage(packData(serverState, o))
   serverState.sendNow()
   return unpackData(clientState, data, 'root')
 }
