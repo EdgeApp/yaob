@@ -47,7 +47,7 @@ The `yaob` library will bridge class properties, such as methods and getters, bu
 
 ### Server Side
 
-The `yaob` library provides a `Bridge` object, which can send objects back and forth. The `Bridge` needs to know how to send and receive messages. For Web Workers, `postMessage` and `onmessage` are the way to do this. Other interfaces, such as Web Sockets, TCP/IP, or Node.js child processes have their own corresponding substitutes:
+The `yaob` library provides a `Bridge` object, which can send objects back and forth. The `Bridge` needs to know how to send and receive messages. For Web Workers, `postMessage` and `onmessage` are the way to do this. Other interfaces, such as Web Sockets, TCP/IP, or Node.js child processes each have their own different ways:
 
 ```js
 // worker.js
@@ -85,7 +85,7 @@ const client = new Bridge({
   sendMessage: message => worker.postMessage(message)
 })
 
-// If the worker sends us a message, forward it to the proxy client:
+// If the worker sends us a message, forward it to the bridge client:
 worker.onmessage = event => client.handleMessage(event.data)
 ```
 
@@ -102,7 +102,7 @@ expect(await root.double(1.5)).equals(3)
 expect(root.version).equals('1.0.0')
 
 // Instance variables are not visible:
-expect('_multiplier' in root).equals(false)
+expect(root).to.not.have.property('_multiplier')
 ```
 
 ### Updating properties
@@ -140,7 +140,7 @@ listExample.on('listChanged', list => {
 })
 ```
 
-Any time a property changes, the bridge will automatically generate a property-`Changed` event with the new value.
+Any time a property changes, the bridge will automatically generate a property-`Changed` event with the new value. The bridge will also emit an `error` event any time an event callback throws an exception.
 
 To send events explicitly, use the `emit` method, which is also part of the `Bridgeable` base class:
 
@@ -154,7 +154,7 @@ The payload must be a single value. If you need a more complicated payload, simp
 someObject.emit('logout', { username: 'yaob', reason: 'timeout' })
 ```
 
-The `on` method returns an `unsubscribe` function. You can use this to unsubscribe at any time. You can also use it to set up a one-shot event listener:
+The `on` method returns an unsubscribe function. You can use this to unsubscribe at any time. You can also use it to set up a one-shot event listener:
 
 ```js
 const unsubscribe = someObject.on('logout', payload => {
@@ -173,7 +173,7 @@ This can also be a useful way to represent logging out of accounts, closing file
 
 ### Unit Testing
 
-To help test your API in a realistic setting (but without starting an entirely new process), the `yaob` library provides a `makeLocalBridge` function, which takes any bridgeable object and returns a locally-connected bridge for it:
+To help test your API in a realistic setting (but without starting an entirely new process), the `yaob` library provides a `makeLocalBridge` function, which returns a locally-connected bridge for any bridgeable object:
 
 ```js
 class MyApi extends Bridgeable { ... }
@@ -240,9 +240,9 @@ const server = new Bridge({
 
 The easiest way to make your object bridgeable is to inherit from the `Bridgeable` base class. If you need more control though, `yaob` provides other options:
 
-* Put your base class in the `sharedClasses` object. All these classes are automatically bridgeable, even if they don't inherit from `Bridgeable`.
-* Call `bridgifyClass` on a class. Any object that inherits from this class will automatically be bridgeable.
+* Call `bridgifyClass` on a class constructor function. Any instances of this class will be bridgeable.
 * Call `bridgifyObject` directly on an object. This will make the object bridgeable, and will *also* bridge the instance properties.
+* Put your base class in the `sharedClasses` object. All these classes are automatically bridgeable, even if they don't inherit from `Bridgeable`.
 
 You might use one of these other options if you don't control your class hierarchy, or if you don't want to expose all the methods from the `Bridgeable` base class to your API users. Even without the methods from the `Bridgeable` base class, you can still access the same functionality using the following substitutes:
 
