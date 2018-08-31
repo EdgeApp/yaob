@@ -34,7 +34,7 @@ export class BridgeState implements ObjectTable {
   }
 
   // Pending message:
-  dirty: { [localId: number]: true }
+  dirty: { [localId: number]: { cache: ValueCache, object: Object } }
   message: Message
 
   // Update scheduling:
@@ -100,10 +100,10 @@ export class BridgeState implements ObjectTable {
    * Marks an object as needing changes.
    */
   markDirty (localId: number, name?: string) {
-    this.dirty[localId] = true
-    if (name != null && name in this.caches[localId]) {
-      this.caches[localId][name] = dirtyValue
-    }
+    const cache = this.caches[localId]
+    if (name != null && name in cache) cache[name] = dirtyValue
+
+    this.dirty[localId] = { cache, object: this.objects[localId] }
     this.wakeup()
   }
 
@@ -297,8 +297,8 @@ export class BridgeState implements ObjectTable {
     // Build change messages:
     for (const id in this.dirty) {
       const localId = Number(id)
-      const o = this.objects[localId]
-      const { dirty, props } = diffObject(this, o, this.caches[localId])
+      const { object, cache } = this.dirty[localId]
+      const { dirty, props } = diffObject(this, object, cache)
       if (dirty) {
         const message: ChangeMessage = { localId, props }
         if (this.message.changed == null) this.message.changed = []

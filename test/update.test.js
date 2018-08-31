@@ -114,4 +114,43 @@ describe('updating', function () {
     expect(local.list).deep.equals([1, 2, 4, 8])
     log.assert(['remote 4', 'server ~1', 'local 4'])
   })
+
+  it('before closing', async function () {
+    const log = makeAssertLog()
+    class MutationApi extends Bridgeable<{
+      count: number,
+      list: Array<number>
+    }> {
+      count: number
+      list: Array<number>
+
+      constructor () {
+        super()
+        this.count = 0
+        this.list = []
+      }
+
+      close () {
+        this.count += 1
+        this.list.push(this.count)
+        this._update('list')
+        this._close()
+        return this.count
+      }
+    }
+
+    const local = await makeLoggedBridge(log, new MutationApi())
+    log.assert(['server +1 e1'])
+
+    expect(local.count).equals(0)
+    expect(local.list).deep.equals([])
+    local.watch('count', count => log('local', count))
+    log.assert(['local 0'])
+
+    // Changes before destruction should still come across:
+    expect(await local.close()).equals(1)
+    expect(local.count).equals(1)
+    expect(local.list).deep.equals([1])
+    log.assert(['client c1', 'server -1 ~1 r1', 'local 1'])
+  })
 })
