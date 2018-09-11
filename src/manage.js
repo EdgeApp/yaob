@@ -14,18 +14,13 @@ export type CallbackRemover = () => mixed
 /**
  * Signature of the `on` method.
  */
-export type OnMethod<Events = {}> = <Name: $Keys<Events>>(
+export type Subscriber<Events: {} = {}> = <Name: $Keys<Events>>(
   name: Name,
   f: (v: $ElementType<Events, Name>) => mixed
 ) => CallbackRemover
 
-/**
- * Signature of the `emit` method.
- */
-export type EmitMethod<Events = {}> = <Name: $Keys<Events>>(
-  name: Name,
-  payload: $ElementType<Events, Name>
-) => mixed
+// No user-supplied value will ever be identical to this.
+export const dirtyValue = {}
 
 /**
  * Subscribes to an event on a bridgeable object.
@@ -46,11 +41,34 @@ export function addListener (
 }
 
 /**
+ * Subscribes to property changes on a bridgeable object.
+ */
+export function addWatcher (
+  o: Object,
+  name: string,
+  f: Function
+): CallbackRemover {
+  const { watchers } = getInstanceMagic(o)
+
+  // Call the callback once.
+  // Don't catch access errors, since we want the user to see them:
+  const data = o[name]
+  callCallback(o, f, data, true)
+
+  if (watchers[name] == null) watchers[name] = { data, fs: [f] }
+  else watchers[name].fs.push(f)
+
+  return function unsubscribe () {
+    watchers[name].fs = watchers[name].fs.filter(i => i !== f)
+  }
+}
+
+/**
  * Destroys a proxy.
  * The remote client will completely forget about this object,
  * and accessing it will become an error.
  */
-export function closeObject (o: Object) {
+export function close (o: Object): mixed {
   const magic = getInstanceMagic(o)
 
   magic.closed = true
@@ -63,7 +81,7 @@ export function closeObject (o: Object) {
 /**
  * Emits an event on a bridgeable object.
  */
-export function emitEvent (o: Object, name: string, payload: mixed): mixed {
+export function emit (o: Object, name: string, payload: mixed): mixed {
   const magic = getInstanceMagic(o)
 
   // Schedule outgoing event messages:
@@ -73,44 +91,58 @@ export function emitEvent (o: Object, name: string, payload: mixed): mixed {
 
   // Call local callbacks:
   const listeners = magic.listeners[name]
-  if (listeners == null) return
-  for (const f of listeners) {
-    try {
-      const out = f(payload)
-
-      // If the function returns a promise, emit an error if it rejects:
-      if (out != null && typeof out.then === 'function') {
-        out.then(void 0, e => emitEvent(o, 'error', e))
-      }
-    } catch (e) {
-      if (name !== 'error') emitEvent(o, 'error', e)
+  if (listeners != null) {
+    for (const f of listeners) {
+      callCallback(o, f, payload, name !== 'error')
     }
   }
 }
 
 /**
- * The emit function,
- * but packaged as a method and ready to be placed on an object.
- */
-export const emitMethod: any = function emitMethod (name, payload) {
-  return emitEvent(this, name, payload)
-}
-
-/**
- * The addListener function,
- * but packaged as a method and ready to be placed on an object.
- */
-export const onMethod: Function = function onMethod (name, f) {
-  return addListener(this, name, f)
-}
-
-/**
  * Marks an object as having changes. The proxy server will send an update.
  */
-export function updateObject (o: Object, name?: string) {
+export function update<T: {}> (o: T, name?: $Keys<T>): mixed {
   const magic = getInstanceMagic(o)
 
   for (const bridge of magic.bridges) {
-    bridge.emitChange(magic.localId, name)
+    bridge.markDirty(magic.localId, name)
+  }
+
+  // Blow away the cache if we have a name:
+  if (name != null && magic.watchers[name] != null) {
+    magic.watchers[name].data = dirtyValue
+  }
+
+  // Call watcher callbacks:
+  for (const n in magic.watchers) {
+    const cache = magic.watchers[n]
+    try {
+      const data = o[n]
+      if (data !== cache.data) {
+        cache.data = data
+        for (const f of cache.fs) callCallback(o, f, cache.data, true)
+      }
+    } catch (e) {}
+  }
+}
+
+/**
+ * Calls a user-supplied callback function with error checking.
+ */
+export function callCallback (
+  o: Object,
+  f: Function,
+  payload: mixed,
+  emitError: boolean
+) {
+  try {
+    const out = f(payload)
+
+    // If the function returns a promise, emit an error if it rejects:
+    if (emitError && out != null && typeof out.then === 'function') {
+      out.then(void 0, e => emit(o, 'error', e))
+    }
+  } catch (e) {
+    if (emitError) emit(o, 'error', e)
   }
 }

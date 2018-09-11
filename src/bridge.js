@@ -2,25 +2,19 @@
 
 import { packData, unpackData } from './data.js'
 import { addListener } from './manage.js'
-import { type Message, handleMessage, makeMessage } from './messages.js'
+import { type Message } from './messages.js'
 import { BridgeState } from './state.js'
 
 /**
  * The bridge sends messages using this function.
  */
-export type SendMessage = (message: Message) => mixed
-
-/**
- * A table of classes shared between the client and the server.
- */
-export type SharedClasses = { [name: string]: Function }
+export type SendMessage = (message: Object) => mixed
 
 /**
  * Options used to create a new bridge.
  */
 export type BridgeOptions = {
   sendMessage: SendMessage,
-  sharedClasses?: SharedClasses,
   throttleMs?: number
 }
 
@@ -28,8 +22,7 @@ export type BridgeOptions = {
  * Options used to create a new local bridge.
  */
 export type LocalBridgeOptions = {
-  cloneMessage?: (x: Message) => Message,
-  sharedClasses?: SharedClasses,
+  cloneMessage?: (x: Object) => Object,
   throttleMs?: number
 }
 
@@ -48,7 +41,7 @@ export class Bridge {
   }
 
   handleMessage (message: Message): mixed {
-    handleMessage(this._state, message)
+    this._state.handleMessage(message)
   }
 
   getRoot () {
@@ -66,27 +59,25 @@ export class Bridge {
  * but don't want to actually spawn a separate process.
  */
 export function makeLocalBridge<T> (o: T, opts: LocalBridgeOptions = {}): T {
-  function nopClone (m) {
+  function nopClone (m: Object): Object {
     return m
   }
-  const { cloneMessage = nopClone, sharedClasses = {}, throttleMs } = opts
+  const { cloneMessage = nopClone, throttleMs } = opts
 
   const serverState = new BridgeState({
     sendMessage (message) {
-      handleMessage(clientState, cloneMessage(message))
+      clientState.handleMessage(cloneMessage(message))
     },
-    sharedClasses,
     throttleMs
   })
   const clientState = new BridgeState({
     sendMessage (message) {
-      handleMessage(serverState, cloneMessage(message))
+      serverState.handleMessage(cloneMessage(message))
     },
-    sharedClasses,
     throttleMs
   })
 
-  const data = packData(serverState, o)
-  serverState.sendMessage(makeMessage(serverState))
-  return unpackData(clientState, data, 'root')
+  const data = cloneMessage(packData(serverState, o))
+  serverState.sendNow()
+  return unpackData(clientState, cloneMessage(data), 'root')
 }

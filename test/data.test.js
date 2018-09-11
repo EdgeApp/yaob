@@ -3,17 +3,43 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { type PackedData, packData, unpackData } from '../src/data.js'
-import { Bridgeable, closeObject } from '../src/index.js'
-import { getInstanceMagic } from '../src/magic.js'
-import { makeProxy } from '../src/objects.js'
-import { BridgeState } from '../src/state.js'
+import {
+  type ObjectTable,
+  type PackedData,
+  packData,
+  unpackData
+} from '../src/data.js'
+import { MAGIC_KEY } from '../src/magic.js'
 
-const dummyOptions = { sendMessage () {} }
+/**
+ * An simplified object table for testing.
+ */
+class MockTable implements ObjectTable {
+  objects: Array<Object>
+  proxies: Array<Object>
+
+  constructor () {
+    this.objects = []
+    this.proxies = []
+  }
+
+  getObject (packedId: number) {
+    return packedId < 0 ? this.proxies[-packedId] : this.objects[packedId]
+  }
+
+  getPackedId (o: Object) {
+    const magic = o[MAGIC_KEY]
+    if (magic == null) throw new TypeError('Not a bridgeable object')
+    if (magic.closed) return null
+    if (magic.remoteId != null) return -magic.remoteId
+    return magic.localId
+  }
+}
+
+const emptyTable = new MockTable()
 
 describe('packData', function () {
   it('handles simple types', function () {
-    const state = new BridgeState(dummyOptions)
     const sparseArray = []
     sparseArray[2] = 2
 
@@ -41,13 +67,11 @@ describe('packData', function () {
     ]
 
     for (const [data, packed] of cases) {
-      expect(packData(state, data)).deep.equals(packed)
+      expect(packData(emptyTable, data)).deep.equals(packed)
     }
   })
 
   it('handles error types', function () {
-    const state = new BridgeState(dummyOptions)
-
     // Builtin errors:
     const error = new Error('e')
     const typeError = new TypeError('type')
@@ -92,50 +116,34 @@ describe('packData', function () {
     ]
 
     for (const [data, raw] of cases) {
-      const split = packData(state, data)
+      const split = packData(emptyTable, data)
       expect(split).deep.equals({ map: 'e', raw })
     }
   })
 
-  it('handles proxy types', function () {
-    const state = new BridgeState(dummyOptions)
+  it('handles bridgeable objects', function () {
+    const o1 = {}
+    const o2 = {}
+    const o3 = {}
 
-    // Normal object:
-    const p1 = new Bridgeable()
-    const id1 = state.getPackedId(getInstanceMagic(p1))
-
-    // Closed object:
-    const p2 = new Bridgeable()
-    closeObject(p2)
-    const id2 = state.getPackedId(getInstanceMagic(p2))
-    expect(id2).equals(null)
-
-    // Proxy object:
-    const p3 = makeProxy(state, {
-      localId: 2,
-      methods: [],
-      props: {}
-    })
-    state.proxies[2] = p3
-    const id3 = state.getPackedId(getInstanceMagic(p3))
-    expect(id3).lessThan(0)
+    o1[MAGIC_KEY] = { localId: 1 }
+    o2[MAGIC_KEY] = { remoteId: 2 }
+    o3[MAGIC_KEY] = { closed: true }
 
     const cases: Array<[Object, PackedData]> = [
-      [p1, { map: 'o', raw: id1 }],
-      [p2, { map: 'o', raw: null }],
-      [p3, { map: 'o', raw: id3 }]
+      [o1, { map: 'o', raw: 1 }],
+      [o2, { map: 'o', raw: -2 }],
+      [o3, { map: 'o', raw: null }]
     ]
 
     for (const [data, split] of cases) {
-      expect(packData(state, data)).deep.equals(split)
+      expect(packData(emptyTable, data)).deep.equals(split)
     }
   })
 })
 
 describe('unpackData', function () {
   it('restores simple types', function () {
-    const state = new BridgeState(dummyOptions)
-
     const cases: Array<[mixed, PackedData]> = [
       // Primitives:
       [false, { raw: false }],
@@ -156,12 +164,11 @@ describe('unpackData', function () {
     ]
 
     for (const [data, packed] of cases) {
-      expect(unpackData(state, packed, 'path')).deep.equals(data)
+      expect(unpackData(emptyTable, packed, 'path')).deep.equals(data)
     }
   })
 
   it('throws for invalid types', function () {
-    const state = new BridgeState(dummyOptions)
     const cases: Array<[PackedData, string]> = [
       [
         { map: '?', raw: 'function' },
@@ -184,6 +191,10 @@ describe('unpackData', function () {
         'TypeError: Closed bridge object at path.cleared'
       ],
       [
+        { map: { bogus: 'o' }, raw: { bogus: 1 } },
+        'RangeError: Invalid packedId at path.bogus'
+      ],
+      [
         { map: { bogus: 'o' }, raw: { bogus: NaN } },
         'RangeError: Invalid packedId at path.bogus'
       ]
@@ -191,7 +202,7 @@ describe('unpackData', function () {
 
     for (const [packed, message] of cases) {
       try {
-        unpackData(state, packed, 'path')
+        unpackData(emptyTable, packed, 'path')
         throw new Error(`should throw ${message}`)
       } catch (e) {
         expect(e.toString()).equals(message)
@@ -200,7 +211,6 @@ describe('unpackData', function () {
   })
 
   it('restores Error payload', function () {
-    const state = new BridgeState(dummyOptions)
     const stack = new Error().stack
     const packed = {
       map: 'e',
@@ -216,7 +226,7 @@ describe('unpackData', function () {
       }
     }
 
-    const e = unpackData(state, packed, 'error')
+    const e = unpackData(emptyTable, packed, 'error')
     expect(e).instanceof(Error)
     expect(e.message).equals('m')
     expect(e.payload).deep.equals({ x: void 0, y: 1 })
@@ -224,7 +234,6 @@ describe('unpackData', function () {
   })
 
   it('restores TypeError', function () {
-    const state = new BridgeState(dummyOptions)
     const stack = new TypeError().stack
     const packed = {
       map: 'e',
@@ -235,31 +244,27 @@ describe('unpackData', function () {
       }
     }
 
-    const e = unpackData(state, packed, 'error')
+    const e = unpackData(emptyTable, packed, 'error')
     expect(e).instanceof(TypeError)
     expect(e.name).equals('TypeError')
   })
 
   it('restores proxy types', function () {
-    const state = new BridgeState(dummyOptions)
+    const table = new MockTable()
 
-    class Derived extends Bridgeable<{ foo: string }> {}
-    const p1 = new Bridgeable()
-    const p2 = new Derived()
     const o1 = {}
+    const o2 = {}
 
-    state.proxies[1] = p1
-    state.proxies[2] = p2
-    state.objects[1] = o1
+    table.proxies[1] = o1
+    table.objects[2] = o2
 
     const cases: Array<[Object, PackedData]> = [
-      [p1, { map: 'o', raw: 1 }],
-      [p2, { map: 'o', raw: 2 }],
-      [o1, { map: 'o', raw: -1 }]
+      [o1, { map: 'o', raw: 1 }],
+      [o2, { map: 'o', raw: -2 }]
     ]
 
     for (const [data, packed] of cases) {
-      expect(unpackData(state, packed, 'path')).equal(data)
+      expect(unpackData(table, packed, 'path')).equal(data)
     }
   })
 })

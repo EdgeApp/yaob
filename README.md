@@ -43,11 +43,11 @@ class WorkerApi extends Bridgeable {
 }
 ```
 
-The `yaob` library will bridge class properties, such as methods and getters, but not instance properties. This means that `this._multiplier` will not be visible to the client. The client will only see the `double` method and the `version` getter. If you need to expose instance properties to your users, just provide the appropriate getters.
+The `yaob` library will not bridge property or method names that begin with an underscore. This means that `this._multiplier` will not be visible to the client. The client will only see the `double` method and the `version` getter. This provides a simple way to make things private.
 
 ### Server Side
 
-The `yaob` library provides a `Bridge` object, which can send objects back and forth. The `Bridge` needs to know how to send and receive messages. For Web Workers, `postMessage` and `onmessage` are the way to do this. Other interfaces, such as Web Sockets, TCP/IP, or Node.js child processes have their own corresponding substitutes:
+The `yaob` library provides a `Bridge` object, which can send objects back and forth. The `Bridge` needs to know how to send and receive messages. For Web Workers, `postMessage` and `onmessage` are the way to do this. Other interfaces, such as Web Sockets, TCP/IP, or Node.js child processes each have their own different ways:
 
 ```js
 // worker.js
@@ -85,7 +85,7 @@ const client = new Bridge({
   sendMessage: message => worker.postMessage(message)
 })
 
-// If the worker sends us a message, forward it to the proxy client:
+// If the worker sends us a message, forward it to the bridge client:
 worker.onmessage = event => client.handleMessage(event.data)
 ```
 
@@ -101,60 +101,70 @@ expect(await root.double(1.5)).equals(3)
 // Property access is synchronous!
 expect(root.version).equals('1.0.0')
 
-// Instance variables are not visible:
-expect('_multiplier' in root).equals(false)
+// Private properties are not visible:
+expect(root).to.not.have.property('_multiplier')
 ```
 
 ### Updating properties
 
-Any time a property changes, the server-side object should call `this.update()`. This method is part of the `Bridgeable` base class. It tells the bridge to diff the object's properties and send over the changed ones.
+Any time a property changes, the server-side object should call `this._update()`. This method is part of the `Bridgeable` base class. It tells the bridge to diff the object's properties and send over the changed ones. The `_update` method is only available on the server side, since its name begins with an underscore.
 
-The bridge compares the object's properties shallowly (`===`). This means `yaob` won't notice if you modify the contents of an array, for example, since the property's identity doesn't change (it's still the same array). To force the bridge to send a property like this, simply pass the property's name to the `update` method:
+The bridge compares the object's properties shallowly (`===`). This means `yaob` won't notice if you modify the contents of an array, for example, since the property's identity doesn't change (it's still the same array). To force the bridge to send a property like this, simply pass the property's name to the `_update` method:
 
 ```js
 class ListExample extends Bridgeable {
   constructor () {
-    this._list = []
-  }
-
-  get list () {
-    return this._list
+    this.list = []
   }
 
   async addItem (item) {
-    this._list.push(item)
+    this.list.push(item)
 
     // Explicitly send the `list` property over the bridge:
-    this.update('list')
+    this._update('list')
   }
 }
 ```
 
-### Events
+### Watching properties
 
-`Bridgeable` objects can emit events. To subscribe to events, use the `on` method, which is part of the `Bridgeable` base class:
+To receive a callback any time a property changes, use the `watch` method, which is part of the `Bridgeable` base class:
 
 ```js
-listExample.on('listChanged', list => {
-  console.log('got new list:', list)
+someObject.watch('list', newValue => console.log(newValue))
+```
+
+The first parameter is the property name, and the second parameter is the callback. The callback will fire once with the initial value, and then again any time the property changes. The object must use `this.update()` to trigger the changes, as described above.
+
+The `on` method returns an `unsubscribe` function. You can use this to unsubscribe at any time.
+
+### Events
+
+`Bridgeable` objects can also emit events. To subscribe to events, use the `on` method, which is part of the `Bridgeable` base class:
+
+```js
+someObject.on('login', username => {
+  console.log('got new user:', username)
 })
 ```
 
-Any time a property changes, the bridge will automatically generate a property-`Changed` event with the new value.
+The bridge will emit an `error` event any time an event callback throws an exception.
 
-To send events explicitly, use the `emit` method, which is also part of the `Bridgeable` base class:
+Use the `_emit` method to send events, which is part of the `Bridgeable` base class:
 
 ```js
-someObject.emit('eventName', somePayload)
+someObject._emit('eventName', somePayload)
 ```
+
+The `on` method is available on both the client and server side objects, but the `_emit` method is only available on the server side, since its name begins with an underscore.
 
 The payload must be a single value. If you need a more complicated payload, simply pack everything into an object:
 
 ```js
-someObject.emit('logout', { username: 'yaob', reason: 'timeout' })
+someObject._emit('logout', { username: 'yaob', reason: 'timeout' })
 ```
 
-The `on` method returns an `unsubscribe` function. You can use this to unsubscribe at any time. You can also use it to set up a one-shot event listener:
+The `on` method returns an unsubscribe function. You can use this to unsubscribe at any time. You can also use it to set up a one-shot event listener:
 
 ```js
 const unsubscribe = someObject.on('logout', payload => {
@@ -167,13 +177,13 @@ const unsubscribe = someObject.on('logout', payload => {
 
 Once the server sends an object over the bridge, the object will stick around for the lifetime of the bridge. This is because there is no way of knowing when the client will access the object again. This can leak memory.
 
-If this sort of thing becomes a problem, you can explicitly free objects by calling `this.close()`, which is part of the `Bridgeable` base class. Closing a server-side object will make it un-bridgeable and will destroy the client-side object. Accessing any property or method on the client side will then throw an exception.
+If this sort of thing becomes a problem, you can explicitly free objects by calling `this._close()`, which is part of the `Bridgeable` base class. Closing a server-side object will make it un-bridgeable and will destroy the client-side object. Accessing any property or method on the client side will then throw an exception.
 
 This can also be a useful way to represent logging out of accounts, closing files, or other situations where an API object needs to become unusable.
 
 ### Unit Testing
 
-To help test your API in a realistic setting (but without starting an entirely new process), the `yaob` library provides a `makeLocalBridge` function, which takes any bridgeable object and returns a locally-connected bridge for it:
+To help test your API in a realistic setting (but without starting an entirely new process), the `yaob` library provides a `makeLocalBridge` function, which returns a locally-connected bridge for any bridgeable object:
 
 ```js
 class MyApi extends Bridgeable { ... }
@@ -193,33 +203,36 @@ const testApi = makeLocalBridge(new MyApi(), {
 
 This makes it possible to incorporate realistic message serialization and deserialization into the test.
 
-### Shared Base Classes
+### Shared Methods
 
-Both the `Bridge` constructor and `makeLocalBridge` function accept an optional `sharedClasses` parameter, which is a table of constructor functions. If an object extends one of these base classes on the server side, the bridge will ensure that it also extends the same class on the client side:
+Bridges normally forward method calls to the original object. Sometimes, though, it's useful to have synchronous methods that run directly on the client side without bridging. The `shareData` function makes this possible:
 
 ```js
-class BaseClass extends Bridgeable {
-  double (x) {
+import { Bridgeable, shareData } from 'yaob'
+
+class SomeApi extends Bridgeable {
+  syncMethod (x) {
     return 2 * x
   }
 }
 
-class SomeApi extends BaseClass { ... }
-
-const local = makeLocalBridge(new SomeApi(), {
-  sharedClasses: { BaseClass }
+// Share the method with the client:
+shareData({
+  'SomeApi.syncMethod': SomeApi.prototype.syncMethod
 })
 
-// The `instanceof` operator works:
-expect(local).instanceof(BaseClass)
+// Send the object over a bridge:
+const local = makeLocalBridge(new SomeApi())
 
 // No `await` needed!
 expect(local.double(3)).equals(6)
 ```
 
-This provides a way to put synchronous methods on your API objects. Just put the methods in the shared base class, and they will exist on both sides of the bridge. Note that these methods will *not* be able to access instance properties, since those aren't bridged. The synchronous methods can only access whatever public API the client side could access anyhow.
+Since shared methods run on the client side, they can only access whatever public API the client side could access anyhow. In particular, this means they cannot access private class members that begin with underscores, since those aren't bridged.
 
-The `Bridge` constructors on both sides of a messaging interface need to receive the same `sharedClasses` table for this to work properly.
+Both the client and the server keep matching tables of shared data. When the server encounters a shared value, it sends value's name to the client, who looks up the equivalent value in its table. This means that every shared value must have a unique name, such as the `'SomeApi.syncMethod'` name given in the example above.
+
+Adding items to the shared table is only effective at library load time. Otherwise, bundling tools like rollup.js will not copy the values into the client-side code bundle.
 
 ### Throttling
 
@@ -238,71 +251,43 @@ const server = new Bridge({
 
 ### Avoiding `Bridgeable`
 
-The easiest way to make your object bridgeable is to inherit from the `Bridgeable` base class. If you need more control though, `yaob` provides other options:
+The easiest way to make your object bridgeable is to extend the `Bridgeable` base class. If you need more control though, `yaob` provides other options:
 
-* Put your base class in the `sharedClasses` object. All these classes are automatically bridgeable, even if they don't inherit from `Bridgeable`.
-* Call `bridgifyClass` on a class. Any object that inherits from this class will automatically be bridgeable.
-* Call `bridgifyObject` directly on an object. This will make the object bridgeable, and will *also* bridge the instance properties.
+* Call `bridgifyClass` on a class constructor function. Any instances of this class will be bridgeable.
+* Call `bridgifyObject` directly on an object.
 
-You might use one of these other options if you don't control your class hierarchy, or if you don't want to expose all the methods from the `Bridgeable` base class to your API users. Even without the methods from the `Bridgeable` base class, you can still access the same functionality using the following substitutes:
+You might use one of these other options if you don't control your class hierarchy, for instance. All the `Bridgeable` methods have standalone versions, so their functionality is available even if your class doesn't extend `Bridgeable`:
 
 ```js
-import { addListener, closeObject, emitEvent, updateObject } from 'yaob'
+import { close, emit, update } from 'yaob'
 
-// Instead of object.on(...):
-addListener(object, 'event', callback)
+// Instead of this._emit(...):
+emit(this, 'event', payload)
 
-// Instead of object.emit(...):
-emitEvent(object, 'event', payload)
+// Instead of this._update():
+update(this)
 
-// Instead of object.update():
-updateObject(object)
-
-// Instead of object.close():
-closeObject(object)
+// Instead of this._close():
+close(this)
 ```
 
-If you would like to give your users a nice `on` method like the one `Bridgeable` provides, you can do this:
+If you would like to give your users nice `on` or `watch` methods like the one `Bridgeable` provides, you can do this:
 
 ```js
-import { bridgifyClass, onMethod } from 'yaob'
+import { bridgifyClass, onMethod, watchMethod } from 'yaob'
 
 class SomeApi { ... }
 SomeApi.prototype.on = onMethod
+SomeApi.prototype.watch = watchMethod
 
 bridgifyClass(SomeApi)
 ```
 
-The `onMethod` value is special, so the bridge knows to replace it with a proper `on` method on the client side instead of bridging it.
+The `onMethod` and `watchMethod` values are shared, so the bridge knows to replace them with a proper client-side methods instead of bridging them.
 
 ### Flow Types
 
-This library ships with Flow types. If you are using Flow, you should pass a table of supported events to the `Bridgeable` base class, like this:
-
-```js
-type Events = {
-  someEvent: string,
-  propertyChanged: number
-}
-
-class SomeApi extends Bridgeable<Events> { ... }
-```
-
-For each property in the table, the name is the event name, and the type is the payload type.
-
-If you are using the `onMethod` as described above, you can do this to get proper typing:
-
-```js
-import type { OnMethod } from 'yaob'
-import { bridgifyClass, onMethod } from 'yaob'
-
-class SomeApi {
-  on: OnMethod<Events>
-}
-SomeApi.prototype.on = onMethod
-
-bridgifyClass(SomeApi)
-```
+This library ships with Flow types. For information on using them, please see the [Flow tutorial](./docs/flow.md).
 
 ### Bundling
 

@@ -3,34 +3,30 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { Bridgeable, updateObject } from '../src/index.js'
+import { Bridgeable, update } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge } from './utils/utils.js'
 
-describe('update', function () {
+describe('updating', function () {
   it('simple mutation', async function () {
     const log = makeAssertLog()
-    class MutationApi extends Bridgeable<{ countChanged: number }> {
-      _count: number
+    class MutationApi extends Bridgeable<{ count: number }> {
+      count: number
 
       constructor () {
         super()
-        this._count = 0
-      }
-
-      get count () {
-        return this._count
+        this.count = 0
       }
 
       increment (step: number) {
-        this._count = this._count + step
-        updateObject(this)
-        return this._count
+        this.count = this.count + step
+        update(this)
+        return this.count
       }
 
       incrementWithoutUpdate (step: number) {
-        this._count = this._count + step
-        return this._count
+        this.count = this.count + step
+        return this.count
       }
     }
 
@@ -39,12 +35,14 @@ describe('update', function () {
     log.assert(['server +1 e1'])
 
     expect(local.count).equals(0)
-    local.on('countChanged', count => log('on', count))
+    local.watch('count', count => log('local', count))
+    remote.watch('count', count => log('remote', count))
+    log.assert(['local 0', 'remote 0'])
 
     // Client-triggered mutation should reflect locally:
     expect(await local.increment(1)).equals(1)
     expect(local.count).equals(1)
-    log.assert(['client c1', 'server ~1 r1', 'on 1'])
+    log.assert(['client c1', 'remote 1', 'server ~1 r1', 'local 1'])
 
     // Quiet mutation works, but doesn't mirror locally:
     expect(await local.incrementWithoutUpdate(2)).equals(3)
@@ -55,38 +53,34 @@ describe('update', function () {
     expect(remote.increment(3)).equals(6)
     await delay(10)
     expect(local.count).equals(6)
-    log.assert(['server ~1', 'on 6'])
+    log.assert(['remote 6', 'server ~1', 'local 6'])
   })
 
   it('deep mutation', async function () {
     const log = makeAssertLog()
-    class MutationApi extends Bridgeable<{ listChanged: Array<number> }> {
-      _list: Array<number>
+    class MutationApi extends Bridgeable<{ list: Array<number> }> {
+      list: Array<number>
 
       constructor () {
         super()
-        this._list = []
-      }
-
-      get list () {
-        return this._list
+        this.list = []
       }
 
       push (item: number) {
-        this._list.push(item)
-        updateObject(this, 'list')
-        return this._list
+        this.list.push(item)
+        update(this, 'list')
+        return this.list
       }
 
       pushWithGeneralUpdate (item: number) {
-        this._list.push(item)
-        updateObject(this)
-        return this._list
+        this.list.push(item)
+        update(this)
+        return this.list
       }
 
       pushWithoutUpdate (item: number) {
-        this._list.push(item)
-        return this._list
+        this.list.push(item)
+        return this.list
       }
     }
 
@@ -95,12 +89,14 @@ describe('update', function () {
     log.assert(['server +1 e1'])
 
     expect(local.list).deep.equals([])
-    local.on('listChanged', list => log('on', list.length))
+    local.watch('list', list => log('local', list.length))
+    remote.watch('list', list => log('remote', list.length))
+    log.assert(['local 0', 'remote 0'])
 
     // Client-triggered mutation should reflect locally:
     expect(await local.push(1)).deep.equals([1])
     expect(local.list).deep.equals([1])
-    log.assert(['client c1', 'server ~1 r1', 'on 1'])
+    log.assert(['client c1', 'remote 1', 'server ~1 r1', 'local 1'])
 
     // Quiet mutation works, but doesn't mirror locally:
     expect(await local.pushWithoutUpdate(2)).deep.equals([1, 2])
@@ -116,6 +112,45 @@ describe('update', function () {
     expect(remote.push(8)).deep.equals([1, 2, 4, 8])
     await delay(10)
     expect(local.list).deep.equals([1, 2, 4, 8])
-    log.assert(['server ~1', 'on 4'])
+    log.assert(['remote 4', 'server ~1', 'local 4'])
+  })
+
+  it('before closing', async function () {
+    const log = makeAssertLog()
+    class MutationApi extends Bridgeable<{
+      count: number,
+      list: Array<number>
+    }> {
+      count: number
+      list: Array<number>
+
+      constructor () {
+        super()
+        this.count = 0
+        this.list = []
+      }
+
+      close () {
+        this.count += 1
+        this.list.push(this.count)
+        this._update('list')
+        this._close()
+        return this.count
+      }
+    }
+
+    const local = await makeLoggedBridge(log, new MutationApi())
+    log.assert(['server +1 e1'])
+
+    expect(local.count).equals(0)
+    expect(local.list).deep.equals([])
+    local.watch('count', count => log('local', count))
+    log.assert(['local 0'])
+
+    // Changes before destruction should still come across:
+    expect(await local.close()).equals(1)
+    expect(local.count).equals(1)
+    expect(local.list).deep.equals([1])
+    log.assert(['client c1', 'server -1 ~1 r1', 'local 1'])
   })
 })

@@ -2,9 +2,9 @@
 
 import { expect } from 'chai'
 
-import { Bridge, type SharedClasses } from '../../src/index.js'
+import { Bridge } from '../../src/index.js'
 
-export function delay (ms: number) {
+export function delay (ms: number): Promise<mixed> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
@@ -23,8 +23,7 @@ export function promiseFail (
  */
 export function makeLoggedBridge<T: Object> (
   log: string => mixed,
-  root: T,
-  sharedClasses: SharedClasses = {}
+  root: T
 ): Promise<T> {
   function describeMessage (message): string {
     let out = ''
@@ -41,16 +40,16 @@ export function makeLoggedBridge<T: Object> (
   const client = new Bridge({
     sendMessage (message) {
       log('client' + describeMessage(message))
+      // console.log(message)
       server.handleMessage(JSON.parse(JSON.stringify(message)))
-    },
-    sharedClasses
+    }
   })
   const server = new Bridge({
     sendMessage (message) {
       log('server' + describeMessage(message))
+      // console.log(message)
       client.handleMessage(JSON.parse(JSON.stringify(message)))
-    },
-    sharedClasses
+    }
   })
 
   server.sendRoot(root)

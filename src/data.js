@@ -5,8 +5,16 @@
  * and then restoring those messages into values on the other side.
  */
 
-import { MAGIC_KEY, getInstanceMagic } from './magic.js'
-import type { BridgeState } from './state.js'
+import { MAGIC_KEY, sharedData } from './magic.js'
+
+/**
+ * The data-packing system uses this interface to turn
+ * bridgeable objects into packedId's and vice-versa.
+ */
+export interface ObjectTable {
+  getPackedId(o: Object): number | null;
+  getObject(packedId: number): Object | void;
+}
 
 /**
  * The bridge tries to send values as-is, but that isn't always possible.
@@ -21,6 +29,7 @@ export type DataMap =
   | '?' // Invalid value
   | 'e' // Error
   | 'o' // Object
+  | 's' // Shared data
   | 'u' // Undefined
 
 /**
@@ -57,22 +66,22 @@ export type PackedError = {
 /**
  * Prepares a value for sending over the wire.
  */
-export function packData (state: BridgeState, data: mixed): PackedData {
+export function packData (table: ObjectTable, data: mixed): PackedData {
   try {
-    const map = mapData(state, data)
-    const raw = packItem(state, map, data)
+    const map = mapData(table, data)
+    const raw = packItem(table, map, data)
     return map !== '' ? { map, raw } : { raw }
   } catch (data) {
-    return packThrow(state, data)
+    return packThrow(table, data)
   }
 }
 
 /**
  * Prepares a thrown value for sending over the wire.
  */
-export function packThrow (state: BridgeState, data: mixed): PackedData {
-  const map = mapData(state, data)
-  const raw = packItem(state, map, data)
+export function packThrow (table: ObjectTable, data: mixed): PackedData {
+  const map = mapData(table, data)
+  const raw = packItem(table, map, data)
   return { map, raw, throw: true }
 }
 
@@ -80,12 +89,12 @@ export function packThrow (state: BridgeState, data: mixed): PackedData {
  * Restores a value that has been sent over the wire.
  */
 export function unpackData (
-  state: BridgeState,
+  table: ObjectTable,
   data: PackedData,
   path: string
 ): any {
   const { map, raw } = data
-  const out = map != null ? unpackItem(state, map, raw, path) : raw
+  const out = map != null ? unpackItem(table, map, raw, path) : raw
   if (data.throw) throw out
   return out
 }
@@ -94,7 +103,7 @@ export function unpackData (
  * Searches through a value, looking for data we can't send directly.
  * Returns a map showing where fixes need to take place.
  */
-function mapData (state: BridgeState, data: mixed): DataMap {
+function mapData (table: ObjectTable, data: mixed): DataMap {
   switch (typeof data) {
     case 'boolean':
     case 'number':
@@ -104,13 +113,15 @@ function mapData (state: BridgeState, data: mixed): DataMap {
     case 'object':
       if (data === null) return ''
       if (data instanceof Error) return 'e'
-      if (data[MAGIC_KEY] != null) return 'o'
+      if (data[MAGIC_KEY] != null) {
+        return data[MAGIC_KEY].shareId != null ? 's' : 'o'
+      }
 
       // Arrays:
       if (Array.isArray(data)) {
         let out: Array<DataMap> | '' = ''
         for (let i = 0; i < data.length; ++i) {
-          const map = mapData(state, data[i])
+          const map = mapData(table, data[i])
           if (map !== '' && out === '') {
             out = []
             for (let j = 0; j < i; ++j) out[j] = ''
@@ -123,7 +134,7 @@ function mapData (state: BridgeState, data: mixed): DataMap {
       // Data objects:
       let out: { [name: string]: DataMap } | '' = ''
       for (const n in data) {
-        const map = mapData(state, data[n])
+        const map = mapData(table, data[n])
         if (map !== '') {
           if (out === '') out = {}
           out[n] = map
@@ -134,6 +145,11 @@ function mapData (state: BridgeState, data: mixed): DataMap {
     case 'undefined':
       return 'u'
 
+    case 'function':
+      return data[MAGIC_KEY] != null && data[MAGIC_KEY].shareId != null
+        ? 's'
+        : '?'
+
     default:
       return '?'
   }
@@ -142,7 +158,7 @@ function mapData (state: BridgeState, data: mixed): DataMap {
 /**
  * Breaks down an error object into a JSON representation.
  */
-function packError (state: BridgeState, o: Object): PackedError {
+function packError (table: ObjectTable, o: Object): PackedError {
   // Grab the properties off the object:
   const { message, stack } = o
   const props = { message, stack, ...o }
@@ -156,13 +172,13 @@ function packError (state: BridgeState, o: Object): PackedError {
   else if (o instanceof URIError) base = 'URIError'
 
   // Build the JSON value:
-  return { base, ...packData(state, props) }
+  return { base, ...packData(table, props) }
 }
 
 /**
  * Copies a value, removing any API objects identified in the types.
  */
-function packItem (state: BridgeState, map: DataMap, data: any): JsonValue {
+function packItem (table: ObjectTable, map: DataMap, data: any): JsonValue {
   switch (map) {
     case '':
       return data
@@ -171,13 +187,13 @@ function packItem (state: BridgeState, map: DataMap, data: any): JsonValue {
       return typeof data
 
     case 'e':
-      return packError(state, data)
+      return packError(table, data)
 
     case 'o':
-      const magic = getInstanceMagic(data)
-      const packedId = state.getPackedId(magic)
-      if (packedId != null && packedId > 0) state.emitCreate(magic, data)
-      return packedId
+      return table.getPackedId(data)
+
+    case 's':
+      return data[MAGIC_KEY].shareId
 
     case 'u':
       return null
@@ -187,7 +203,7 @@ function packItem (state: BridgeState, map: DataMap, data: any): JsonValue {
       if (Array.isArray(map)) {
         const out = []
         for (let i = 0; i < map.length; ++i) {
-          out[i] = packItem(state, map[i], data[i])
+          out[i] = packItem(table, map[i], data[i])
         }
         return out
       }
@@ -195,7 +211,7 @@ function packItem (state: BridgeState, map: DataMap, data: any): JsonValue {
       // Objects:
       const out = {}
       for (const n in data) {
-        out[n] = n in map ? packItem(state, map[n], data[n]) : data[n]
+        out[n] = n in map ? packItem(table, map[n], data[n]) : data[n]
       }
       return out
   }
@@ -205,7 +221,7 @@ function packItem (state: BridgeState, map: DataMap, data: any): JsonValue {
  * Restores an error object from its JSON representation.
  */
 function unpackError (
-  state: BridgeState,
+  table: ObjectTable,
   value: PackedError,
   path: string
 ): Error {
@@ -223,7 +239,7 @@ function unpackError (
   const out: Object = new Base()
 
   // Restore the properties:
-  const props = unpackData(state, value, path)
+  const props = unpackData(table, value, path)
   for (const n in props) out[n] = props[n]
 
   return out
@@ -233,7 +249,7 @@ function unpackError (
  * Restores a value that has been sent over the wire.
  */
 function unpackItem (
-  state: BridgeState,
+  table: ObjectTable,
   map: DataMap,
   raw: any,
   path: string
@@ -250,7 +266,7 @@ function unpackItem (
       if (typeof raw !== 'object' || raw === null) {
         throw new TypeError(`Expecting an error description at ${path}`)
       }
-      return unpackError(state, raw, path)
+      return unpackError(table, raw, path)
 
     case 'o':
       if (raw === null) {
@@ -259,9 +275,17 @@ function unpackItem (
       if (typeof raw !== 'number') {
         throw new TypeError(`Expecting a packedId at ${path}`)
       }
-      const o = state.getObject(-raw)
+      const o = table.getObject(-raw)
       if (o == null) throw new RangeError(`Invalid packedId at ${path}`)
       return o
+
+    case 's':
+      if (typeof raw !== 'string') {
+        throw new TypeError(`Expecting a shareId at ${path}`)
+      }
+      const s = sharedData[raw]
+      if (s == null) throw new RangeError(`Invalid shareId at ${path}`)
+      return s
 
     case 'u':
       return void 0
@@ -281,7 +305,7 @@ function unpackItem (
         }
         const out = []
         for (let i = 0; i < map.length; ++i) {
-          out[i] = unpackItem(state, map[i], raw[i], `${path}[${i}]`)
+          out[i] = unpackItem(table, map[i], raw[i], `${path}[${i}]`)
         }
         return out
       }
@@ -290,7 +314,7 @@ function unpackItem (
       const out = {}
       for (const n in raw) {
         out[n] =
-          n in map ? unpackItem(state, map[n], raw[n], `${path}.${n}`) : raw[n]
+          n in map ? unpackItem(table, map[n], raw[n], `${path}.${n}`) : raw[n]
       }
       return out
   }

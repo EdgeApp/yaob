@@ -5,17 +5,17 @@ import { describe, it } from 'mocha'
 
 import {
   Bridgeable,
-  type OnMethod,
   bridgifyClass,
   bridgifyObject,
-  emitEvent,
+  emit,
   makeLocalBridge,
   onMethod
 } from '../src/index.js'
+import type { Subscriber } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
 
-describe('local bridge', function () {
+describe('bridging', function () {
   it('maintains object identity', async function () {
     const log = makeAssertLog()
     class ChildApi extends Bridgeable<> {}
@@ -51,7 +51,28 @@ describe('local bridge', function () {
     expect(local.self).equals(local)
   })
 
-  it('method calls', async function () {
+  it('filters private members', async function () {
+    class SomeClass extends Bridgeable<> {
+      prop: number
+      _prop: number
+
+      constructor () {
+        super()
+        this.prop = 1
+        this._prop = 2
+      }
+
+      method () {}
+      _method () {}
+    }
+    const local = makeLocalBridge(new SomeClass())
+    expect(local.method).is.a('function')
+    expect(local.prop).equals(1)
+    expect(local).to.not.have.property('_method')
+    expect(local).to.not.have.property('_prop')
+  })
+
+  it('calls methods', async function () {
     const log = makeAssertLog()
     class MethodApi extends Bridgeable<> {
       simple (x: number) {
@@ -97,7 +118,7 @@ describe('local bridge', function () {
     }
     bridgifyClass(SomeClass)
     const local = makeLocalBridge(new SomeClass())
-    expect(typeof local.foo).equals('function')
+    expect(local.foo).is.a('function')
   })
 
   it('bridgifyObject', function () {
@@ -106,22 +127,13 @@ describe('local bridge', function () {
     }
     bridgifyObject(remote)
     const local = makeLocalBridge(remote)
-    expect(typeof local.foo).equals('function')
+    expect(local.foo).is.a('function')
   })
 
-  it('sharedClasses', function () {
-    class SomeClass {
-      foo () {}
-    }
-    const local = makeLocalBridge(new SomeClass(), { SomeClass })
-    expect(local).instanceof(SomeClass)
-    expect(typeof local.foo).equals('function')
-  })
-
-  it('onMethod proxy', async function () {
+  it('preserves onMethod', async function () {
     const log = makeAssertLog()
     class SomeClass {
-      on: OnMethod<{ event: number }>
+      on: Subscriber<{ event: number }>
     }
     SomeClass.prototype.on = onMethod
     bridgifyClass(SomeClass)
@@ -130,8 +142,40 @@ describe('local bridge', function () {
     const local = makeLocalBridge(remote)
     local.on('event', x => log('got event', x))
 
-    emitEvent(remote, 'event', 1)
+    emit(remote, 'event', 1)
     await delay(10)
     log.assert(['got event 1'])
+  })
+
+  it('bridges proxies', async function () {
+    const log = makeAssertLog()
+    class SomeClass extends Bridgeable<{ flag: boolean }, { event: number }> {
+      flag: boolean
+
+      constructor () {
+        super()
+        this.flag = false
+      }
+
+      foo () {
+        this.flag = true
+        this._update()
+        return 'bar'
+      }
+    }
+
+    // Note that `makeLocalBridge` happens twice here:
+    const remote = new SomeClass()
+    const local = makeLocalBridge(makeLocalBridge(remote))
+    expect(local.flag).equals(false)
+    local.on('event', x => log('got event', x))
+    local.watch('flag', x => log('got flag', x))
+    log.assert(['got flag false'])
+
+    // Quickly try the basics:
+    remote._emit('event', 1)
+    expect(await local.foo()).equals('bar')
+    expect(local.flag).equals(true)
+    log.assert(['got event 1', 'got flag true'])
   })
 })

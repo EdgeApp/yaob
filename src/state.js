@@ -1,21 +1,28 @@
 // @flow
 
-import type { BridgeOptions, SendMessage, SharedClasses } from './bridge.js'
-import { Bridgeable } from './bridgeable.js'
-import { packData, packThrow } from './data.js'
-import { type InstanceMagic, bridgifyClass, shareClass } from './magic.js'
+import type { BridgeOptions, SendMessage } from './bridge.js'
+import { type ObjectTable, packData, packThrow, unpackData } from './data.js'
+import { bridgifyClass, getInstanceMagic } from './magic.js'
+import { close, emit, update } from './manage.js'
 import type {
   CallMessage,
+  ChangeMessage,
   CreateMessage,
   EventMessage,
+  Message,
   ReturnMessage
 } from './messages.js'
-import { makeMessage } from './messages.js'
-import { type ValueCache, dirtyValue, packObject } from './objects.js'
+import {
+  type ValueCache,
+  diffObject,
+  dirtyValue,
+  makeProxy,
+  packObject,
+  updateObjectProps
+} from './objects.js'
 
-export class BridgeState {
+export class BridgeState implements ObjectTable {
   // Objects:
-  +sharedClasses: SharedClasses
   +proxies: { [objectId: number]: Object }
   +objects: { [localId: number]: Object }
   +caches: { [localId: number]: ValueCache }
@@ -27,12 +34,8 @@ export class BridgeState {
   }
 
   // Pending message:
-  changed: { [localId: number]: true }
-  closed: Array<number>
-  created: Array<CreateMessage>
-  calls: Array<CallMessage>
-  returns: Array<ReturnMessage>
-  events: Array<EventMessage>
+  dirty: { [localId: number]: { cache: ValueCache, object: Object } }
+  message: Message
 
   // Update scheduling:
   +throttleMs: number
@@ -41,13 +44,9 @@ export class BridgeState {
   +sendMessage: SendMessage
 
   constructor (opts: BridgeOptions) {
-    const { sendMessage, sharedClasses = {}, throttleMs = 0 } = opts
+    const { sendMessage, throttleMs = 0 } = opts
 
     // Objects:
-    this.sharedClasses = sharedClasses
-    for (const name in sharedClasses) {
-      shareClass(sharedClasses[name], name)
-    }
     this.proxies = {}
     this.objects = {}
     this.caches = {}
@@ -57,25 +56,14 @@ export class BridgeState {
     this.pendingCalls = {}
 
     // Pending message:
-    this.messageSent()
+    this.dirty = {}
+    this.message = {}
 
     // Update scheduling:
     this.throttleMs = throttleMs
     this.lastUpdate = 0
     this.sendPending = false
     this.sendMessage = sendMessage
-  }
-
-  /**
-   * Returns a base class based on its name.
-   */
-  getBase (base?: string): Function {
-    const table = { Bridgeable }
-
-    if (base == null) return Object
-    if (this.sharedClasses[base] != null) return this.sharedClasses[base]
-    if (table[base] != null) return table[base]
-    throw new RangeError(`Cannot find shared base class ${base}`)
   }
 
   /**
@@ -90,10 +78,20 @@ export class BridgeState {
    * The id is positive for objects created on this side of the bridge,
    * and negative for proxy objects reflecting things on the other side.
    */
-  getPackedId (magic: InstanceMagic): number | null {
+  getPackedId (o: Object): number | null {
+    const magic = getInstanceMagic(o)
     if (magic.closed) return null
     if (magic.remoteId != null && this.proxies[magic.remoteId] != null) {
       return -magic.remoteId
+    }
+    if (this.objects[magic.localId] == null) {
+      // Add unknown objects to the bridge:
+      this.objects[magic.localId] = o
+
+      const { cache, create } = packObject(this, o)
+      this.caches[magic.localId] = cache
+      magic.bridges.push(this)
+      this.emitCreate(create, o)
     }
     return magic.localId
   }
@@ -101,11 +99,11 @@ export class BridgeState {
   /**
    * Marks an object as needing changes.
    */
-  emitChange (localId: number, name?: string) {
-    this.changed[localId] = true
-    if (name != null && name in this.caches[localId]) {
-      this.caches[localId][name] = dirtyValue
-    }
+  markDirty (localId: number, name?: string) {
+    const cache = this.caches[localId]
+    if (name != null && name in cache) cache[name] = dirtyValue
+
+    this.dirty[localId] = { cache, object: this.objects[localId] }
     this.wakeup()
   }
 
@@ -115,24 +113,17 @@ export class BridgeState {
   emitClose (localId: number) {
     delete this.objects[localId]
     delete this.caches[localId]
-    this.closed.push(localId)
+    if (this.message.closed == null) this.message.closed = []
+    this.message.closed.push(localId)
     this.wakeup()
   }
 
   /**
    * Attaches an object to this bridge, sending a creation message.
    */
-  emitCreate (magic: InstanceMagic, o: Object) {
-    const { localId } = magic
-
-    // Bail out if we already have this object:
-    if (this.objects[localId] != null) return
-    this.objects[localId] = o
-
-    const { cache, create } = packObject(this, o)
-    this.caches[localId] = cache
-    magic.bridges.push(this)
-    this.created.push(create)
+  emitCreate (create: CreateMessage, o: Object) {
+    if (this.message.created == null) this.message.created = []
+    this.message.created.push(create)
     // this.wakeup() not needed, since this is part of data packing.
   }
 
@@ -147,7 +138,8 @@ export class BridgeState {
       name,
       ...packData(this, args)
     }
-    this.calls.push(message)
+    if (this.message.calls == null) this.message.calls = []
+    this.message.calls.push(message)
     this.wakeup()
 
     return new Promise((resolve, reject) => {
@@ -164,7 +156,8 @@ export class BridgeState {
       name,
       ...packData(this, payload)
     }
-    this.events.push(message)
+    if (this.message.events == null) this.message.events = []
+    this.message.events.push(message)
     this.wakeup()
   }
 
@@ -176,20 +169,147 @@ export class BridgeState {
       callId,
       ...(fail ? packThrow(this, value) : packData(this, value))
     }
-    this.returns.push(message)
+    if (this.message.returns == null) this.message.returns = []
+    this.message.returns.push(message)
     this.wakeup()
   }
 
   /**
-   * Clears everything scheduled to be sent in the next message.
+   * Handles an incoming message,
+   * updating state and triggering side-effects as needed.
    */
-  messageSent () {
-    this.changed = {}
-    this.closed = []
-    this.created = []
-    this.calls = []
-    this.returns = []
-    this.events = []
+  handleMessage (message: Message) {
+    // ----------------------------------------
+    // Phase 1: Get our proxies up to date.
+    // ----------------------------------------
+
+    // Handle newly-created objects:
+    if (message.created) {
+      // Pass 1: Create proxies for the new objects:
+      for (const create of message.created) {
+        this.proxies[create.localId] = makeProxy(this, create)
+      }
+
+      // Pass 2: Fill in the values:
+      for (const create of message.created) {
+        updateObjectProps(this, this.proxies[create.localId], create.props)
+      }
+    }
+
+    // Handle updated objects:
+    if (message.changed) {
+      // Pass 1: Update all the proxies:
+      for (const change of message.changed) {
+        const { localId, props } = change
+        const o = this.proxies[localId]
+        if (o == null) {
+          throw new RangeError(`Invalid localId ${localId}`)
+        }
+        updateObjectProps(this, o, props)
+      }
+
+      // Pass 2: Fire the callbacks:
+      for (const change of message.changed) {
+        update(this.proxies[change.localId])
+      }
+    }
+
+    // ----------------------------------------
+    // Phase 2: Handle events & method calls
+    // ----------------------------------------
+
+    // Handle events:
+    if (message.events) {
+      for (const event of message.events) {
+        const { localId, name } = event
+        const o = localId === 0 ? this : this.proxies[localId]
+        if (o == null) continue
+        try {
+          emit(o, name, unpackData(this, event, name))
+        } catch (e) {
+          emit(o, 'error', e) // Payload unpacking problem
+        }
+      }
+    }
+
+    // Handle method calls:
+    if (message.calls) {
+      for (const call of message.calls) {
+        const { callId, remoteId, name } = call
+
+        try {
+          const o = this.objects[remoteId]
+          if (o == null) {
+            throw new TypeError(
+              `Cannot call method '${name}' of closed proxy (remote)`
+            )
+          }
+          if (typeof o[name] !== 'function') {
+            throw new TypeError(`'${name}' is not a function`)
+          }
+          const args = unpackData(this, call, `${name}.arguments`)
+          Promise.resolve(o[name].apply(o, args)).then(
+            value => this.emitReturn(callId, false, value),
+            e => this.emitReturn(callId, true, e)
+          )
+        } catch (e) {
+          this.emitReturn(callId, true, e)
+        }
+      }
+    }
+
+    // Handle method returns:
+    if (message.returns) {
+      for (const ret of message.returns) {
+        const { callId } = ret
+        const pendingCall = this.pendingCalls[callId]
+        if (pendingCall == null) {
+          throw new RangeError(`Invalid callId ${callId}`)
+        }
+        try {
+          pendingCall.resolve(unpackData(this, ret, '<return>'))
+        } catch (e) {
+          pendingCall.reject(e)
+        } finally {
+          delete this.pendingCalls[callId]
+        }
+      }
+    }
+
+    // ----------------------------------------
+    // Phase 3: Clean up closed objects
+    // ----------------------------------------
+
+    if (message.closed) {
+      for (const localId of message.closed) {
+        const o = this.proxies[localId]
+        if (o == null) return
+        delete this.proxies[localId]
+        close(o)
+      }
+    }
+  }
+
+  /**
+   * Sends the current message.
+   */
+  sendNow () {
+    // Build change messages:
+    for (const id in this.dirty) {
+      const localId = Number(id)
+      const { object, cache } = this.dirty[localId]
+      const { dirty, props } = diffObject(this, object, cache)
+      if (dirty) {
+        const message: ChangeMessage = { localId, props }
+        if (this.message.changed == null) this.message.changed = []
+        this.message.changed.push(message)
+      }
+    }
+
+    const message = this.message
+    this.dirty = {}
+    this.message = {}
+    this.sendMessage(message)
   }
 
   /**
@@ -202,7 +322,7 @@ export class BridgeState {
     const task = () => {
       this.sendPending = false
       this.lastUpdate = Date.now()
-      this.sendMessage(makeMessage(this))
+      this.sendNow()
     }
 
     // We really do want `setTimeout` here, even if the delay is 0,
