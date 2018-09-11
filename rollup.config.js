@@ -5,11 +5,17 @@ import flowEntry from 'rollup-plugin-flow-entry'
 import packageJson from './package.json'
 
 const babelOpts = {
-  presets: ['es2015-rollup', 'flow'],
-  plugins: [
-    'transform-object-rest-spread',
-    ['transform-es2015-for-of', { loose: true }]
-  ]
+  presets: [
+    [
+      '@babel/preset-env',
+      {
+        exclude: ['transform-regenerator'],
+        loose: true
+      }
+    ],
+    '@babel/preset-flow'
+  ],
+  plugins: [['@babel/plugin-transform-for-of', { assumeArray: true }]]
 }
 
 export default {
