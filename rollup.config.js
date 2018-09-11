@@ -15,7 +15,10 @@ const babelOpts = {
     ],
     '@babel/preset-flow'
   ],
-  plugins: [['@babel/plugin-transform-for-of', { assumeArray: true }]]
+  plugins: [
+    ['@babel/plugin-transform-for-of', { assumeArray: true }],
+    '@babel/plugin-transform-object-assign'
+  ]
 }
 
 export default {
