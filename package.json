@@ -26,7 +26,8 @@
     "lint": "eslint '*.js' 'src/**/*.js' 'test/**/*.js'",
     "prepare": "npm run build",
     "pretest": "npm run build:test",
-    "test": "mocha --require source-map-support/register build/tests.js"
+    "test": "mocha --require source-map-support/register build/tests.js",
+    "types": "tsc && dts-bundle --main build/index.d.ts --name yaob && npx flowgen --flow-typed-format build/protocol.d.ts -o blah.js.flow"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
@@ -35,6 +36,7 @@
     "@babel/preset-typescript": "^7.0.0",
     "babel-eslint": "^8.2.5",
     "chai": "^4.1.2",
+    "dts-bundle": "^0.7.3",
     "eslint": "^5.0.1",
     "eslint-config-standard": "^11.0.0",
     "eslint-plugin-flowtype": "^2.49.3",
@@ -43,6 +45,7 @@
     "eslint-plugin-promise": "^3.8.0",
     "eslint-plugin-standard": "^3.1.0",
     "flow-bin": "^0.76.0",
+    "flowgen": "^1.2.3",
     "husky": "^0.14.3",
     "import-sort-cli": "^5.0.0",
     "import-sort-parser-babylon": "^5.0.0",
