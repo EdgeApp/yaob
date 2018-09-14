@@ -5,17 +5,17 @@
  * and then restoring those messages into proxies on the other side.
  */
 
-import { packData, packThrow, unpackData } from './data.js'
+import { packData, packThrow, unpackData } from './data'
 import {
   MAGIC_KEY,
-  type ProxyMagic,
+  ProxyMagic,
   getInstanceMagic,
   makeProxyMagic
-} from './magic.js'
-import type { CreateMessage, PackedProps } from './protocol.js'
-import type { BridgeState } from './state.js'
+} from './magic'
+import { CreateMessage, PackedProps } from './protocol'
+import { BridgeState } from './state'
 
-export type ValueCache = { [name: string]: mixed }
+export type ValueCache = { [name: string]: unknown }
 
 // No user-supplied value will ever be identical to this.
 export const dirtyValue = {}
@@ -28,7 +28,7 @@ export function packObject (
   state: BridgeState,
   o: Object
 ): {
-  cache: ValueCache,
+  cache: ValueCache
   create: CreateMessage
 } {
   // Iterate the prototype chain, looking for property names:
@@ -78,7 +78,7 @@ export function diffObject (
   state: BridgeState,
   o: Object,
   cache: ValueCache
-): { dirty: boolean, props: PackedProps } {
+): { dirty: boolean; props: PackedProps } {
   let dirty = false
   const props: PackedProps = {}
 
@@ -132,7 +132,7 @@ export function updateObjectProps (
   state: BridgeState,
   o: Object,
   props: PackedProps
-): mixed {
+): unknown {
   const magic: ProxyMagic = o[MAGIC_KEY]
 
   for (const n in props) {

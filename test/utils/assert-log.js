@@ -16,9 +16,9 @@ export type AssertLogOptions = {
  * with an array of expected log strings. If there is a mis-match,
  * `assert` will throw an exception.
  */
-export type AssertLog = ((...args: Array<mixed>) => mixed) & {
-  assert(Array<string>): mixed,
-  clear(): mixed
+export type AssertLog = ((...args: Array<unknown>) => unknown) & {
+  assert(Array<string>): unknown,
+  clear(): unknown
 }
 
 /**

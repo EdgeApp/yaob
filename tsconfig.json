@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "declarationDir": "build",
+    "emitDeclarationOnly": true,
+    "strict": false,
+    "target": "esnext"
+  },
+  "include": [
+    "src"
+  ]
+}

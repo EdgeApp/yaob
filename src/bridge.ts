@@ -1,20 +1,20 @@
 // @flow
 
-import { packData, unpackData } from './data.js'
-import { addListener } from './manage.js'
-import { type Message } from './protocol.js'
-import { BridgeState } from './state.js'
+import { packData, unpackData } from './data'
+import { addListener } from './manage'
+import { Message } from './protocol'
+import { BridgeState } from './state'
 
 /**
  * The bridge sends messages using this function.
  */
-export type SendMessage = (message: Object) => mixed
+export type SendMessage = (message: Object) => unknown
 
 /**
  * Options used to create a new bridge.
  */
 export type BridgeOptions = {
-  sendMessage: SendMessage,
+  sendMessage: SendMessage
   throttleMs?: number
 }
 
@@ -22,7 +22,7 @@ export type BridgeOptions = {
  * Options used to create a new local bridge.
  */
 export type LocalBridgeOptions = {
-  cloneMessage?: (x: Object) => Object,
+  cloneMessage?: (x: object) => object
   throttleMs?: number
 }
 
@@ -30,8 +30,8 @@ export type LocalBridgeOptions = {
  * An object bridge.
  */
 export class Bridge {
-  +_state: BridgeState
-  +_rootPromise: Promise<Object>
+  readonly _state: BridgeState
+  readonly _rootPromise: Promise<Object>
 
   constructor (opts: BridgeOptions) {
     this._state = new BridgeState(opts)
@@ -40,7 +40,7 @@ export class Bridge {
     )
   }
 
-  handleMessage (message: Message): mixed {
+  handleMessage (message: Message): unknown {
     this._state.handleMessage(message)
   }
 
@@ -79,5 +79,5 @@ export function makeLocalBridge<T> (o: T, opts: LocalBridgeOptions = {}): T {
 
   const data = cloneMessage(packData(serverState, o))
   serverState.sendNow()
-  return unpackData(clientState, cloneMessage(data), 'root')
+  return unpackData(clientState, cloneMessage(data) as any, 'root')
 }

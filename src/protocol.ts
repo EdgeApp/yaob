@@ -1,6 +1,6 @@
 // @flow
 
-import { type PackedData } from './data.js'
+import { PackedData } from './data'
 
 /**
  * A PackedData instance that handles object properties.
@@ -11,8 +11,8 @@ export type PackedProps = { [name: string]: PackedData }
  * The client sends this message to call methods on a proxy object.
  */
 export type CallMessage = {
-  callId: number,
-  remoteId: number,
+  callId: number
+  remoteId: number
   name: string
 } & PackedData // Parameter array
 
@@ -20,7 +20,7 @@ export type CallMessage = {
  * The server sends this when the values on a proxy object change.
  */
 export type ChangeMessage = {
-  localId: number,
+  localId: number
   props: PackedProps
 }
 
@@ -28,8 +28,8 @@ export type ChangeMessage = {
  * The server sends this when it creates a new proxy object.
  */
 export type CreateMessage = {
-  localId: number,
-  methods: Array<string>,
+  localId: number
+  methods: Array<string>
   props: PackedProps
 }
 
@@ -37,7 +37,7 @@ export type CreateMessage = {
  * The server sends this when it creates a new proxy object.
  */
 export type EventMessage = {
-  localId: number,
+  localId: number
   name: string
 } & PackedData // Parameter array
 
@@ -53,10 +53,10 @@ export type ReturnMessage = {
  * It can include the various event types described above.
  */
 export type Message = {
-  calls?: Array<CallMessage>,
-  changed?: Array<ChangeMessage>,
-  closed?: Array<number>,
-  created?: Array<CreateMessage>,
-  events?: Array<EventMessage>,
+  calls?: Array<CallMessage>
+  changed?: Array<ChangeMessage>
+  closed?: Array<number>
+  created?: Array<CreateMessage>
+  events?: Array<EventMessage>
   returns?: Array<ReturnMessage>
 }

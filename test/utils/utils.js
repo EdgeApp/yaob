@@ -4,14 +4,14 @@ import { expect } from 'chai'
 
 import { Bridge } from '../../src/index.js'
 
-export function delay (ms: number): Promise<mixed> {
+export function delay (ms: number): Promise<unknown> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 export function promiseFail (
-  promise: Promise<mixed>,
+  promise: Promise<unknown>,
   text: string
-): Promise<mixed> {
+): Promise<unknown> {
   return promise.then(
     ok => Promise.reject(new Error('Should fail')),
     e => expect(e.toString()).equals(text)
@@ -22,7 +22,7 @@ export function promiseFail (
  * Creates a local client / server bridge with logging.
  */
 export function makeLoggedBridge<T: Object> (
-  log: string => mixed,
+  log: string => unknown,
   root: T
 ): Promise<T> {
   function describeMessage (message): string {

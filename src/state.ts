@@ -1,47 +1,47 @@
 // @flow
 
-import type { BridgeOptions, SendMessage } from './bridge.js'
-import { type ObjectTable, packData, packThrow, unpackData } from './data.js'
-import { bridgifyClass, getInstanceMagic } from './magic.js'
-import { close, emit, update } from './manage.js'
+import { BridgeOptions, SendMessage } from './bridge'
+import { ObjectTable, packData, packThrow, unpackData } from './data'
+import { bridgifyClass, getInstanceMagic } from './magic'
+import { close, emit, update } from './manage'
 import {
-  type ValueCache,
+  ValueCache,
   diffObject,
   dirtyValue,
   makeProxy,
   packObject,
   updateObjectProps
-} from './objects.js'
-import type {
+} from './objects'
+import {
   CallMessage,
   ChangeMessage,
   CreateMessage,
   EventMessage,
   Message,
   ReturnMessage
-} from './protocol.js'
+} from './protocol'
 
 export class BridgeState implements ObjectTable {
   // Objects:
-  +proxies: { [objectId: number]: Object }
-  +objects: { [localId: number]: Object }
-  +caches: { [localId: number]: ValueCache }
+  readonly proxies: { [objectId: number]: Object }
+  readonly objects: { [localId: number]: Object }
+  readonly caches: { [localId: number]: ValueCache }
 
   // Outgoing method calls:
   nextCallId: number
   pendingCalls: {
-    [callId: number]: { resolve: Function, reject: Function }
+    [callId: number]: { resolve: Function; reject: Function }
   }
 
   // Pending message:
-  dirty: { [localId: number]: { cache: ValueCache, object: Object } }
+  dirty: { [localId: number]: { cache: ValueCache; object: Object } }
   message: Message
 
   // Update scheduling:
-  +throttleMs: number
+  readonly throttleMs: number
   lastUpdate: number
   sendPending: boolean
-  +sendMessage: SendMessage
+  readonly sendMessage: SendMessage
 
   constructor (opts: BridgeOptions) {
     const { sendMessage, throttleMs = 0 } = opts
@@ -130,7 +130,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Enqueues a proxy call message.
    */
-  emitCall (remoteId: number, name: string, args: mixed): Promise<mixed> {
+  emitCall (remoteId: number, name: string, args: unknown): Promise<unknown> {
     const callId = this.nextCallId++
     const message: CallMessage = {
       callId,
@@ -150,7 +150,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Enqueues an event message.
    */
-  emitEvent (localId: number, name: string, payload: mixed) {
+  emitEvent (localId: number, name: string, payload: unknown) {
     const message: EventMessage = {
       localId,
       name,
@@ -164,7 +164,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Enqueues a function return message.
    */
-  emitReturn (callId: number, fail: boolean, value: mixed) {
+  emitReturn (callId: number, fail: boolean, value: unknown) {
     const message: ReturnMessage = {
       callId,
       ...(fail ? packThrow(this, value) : packData(this, value))

@@ -35,7 +35,7 @@ class ParentApi extends Bridgeable<> {
   }
 }
 
-function checkDestruction (child: ChildApi): Promise<mixed> {
+function checkDestruction (child: ChildApi): Promise<unknown> {
   // Client-side methods & properties work:
   expect(child.syncMethod(1.5)).equals(3)
   expect(child.answer).equals(42)

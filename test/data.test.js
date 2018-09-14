@@ -43,7 +43,7 @@ describe('packData', function () {
     const sparseArray = []
     sparseArray[2] = 2
 
-    const cases: Array<[mixed, PackedData]> = [
+    const cases: Array<[unknown, PackedData]> = [
       // Primitives:
       [false, { raw: false }],
       [true, { raw: true }],
@@ -85,7 +85,7 @@ describe('packData', function () {
     }
     const payloadError = new PayloadError({ x: void 0, y: 1 }, 'payload')
 
-    const cases: Array<[mixed, PackedData]> = [
+    const cases: Array<[unknown, PackedData]> = [
       [
         error,
         {
@@ -144,7 +144,7 @@ describe('packData', function () {
 
 describe('unpackData', function () {
   it('restores simple types', function () {
-    const cases: Array<[mixed, PackedData]> = [
+    const cases: Array<[unknown, PackedData]> = [
       // Primitives:
       [false, { raw: false }],
       [true, { raw: true }],

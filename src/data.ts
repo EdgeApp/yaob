@@ -5,15 +5,15 @@
  * and then restoring those messages into values on the other side.
  */
 
-import { MAGIC_KEY, sharedData } from './magic.js'
+import { MAGIC_KEY, sharedData } from './magic'
 
 /**
  * The data-packing system uses this interface to turn
  * bridgeable objects into packedId's and vice-versa.
  */
 export interface ObjectTable {
-  getPackedId(o: Object): number | null;
-  getObject(packedId: number): Object | void;
+  getPackedId(o: Object): number | null
+  getObject(packedId: number): Object | void
 }
 
 /**
@@ -22,9 +22,7 @@ export interface ObjectTable {
  * need to take place to the value. This data structure is recursive,
  * so it matches the "shape" of the value.
  */
-export type DataMap =
-  | { +[name: string]: DataMap }
-  | Array<DataMap>
+export type DataTypes =
   | '' // No change
   | '?' // Invalid value
   | 'e' // Error
@@ -32,17 +30,10 @@ export type DataMap =
   | 's' // Shared data
   | 'u' // Undefined
 
-/**
- * A pure JSON value type.
- */
-export type JsonValue =
-  | { +[name: string]: JsonValue }
-  | Array<JsonValue>
-  | false
-  | null
-  | number
-  | string
-  | true
+export type DataMap =
+  | { [name: string]: DataTypes }
+  | Array<DataTypes>
+  | DataTypes
 
 /**
  * A value for sending over the wire.
@@ -51,22 +42,22 @@ export type JsonValue =
  * If this value was thrown, `throw` will be true.
  */
 export type PackedData = {
-  +map?: DataMap,
-  +raw: JsonValue,
-  +throw?: true
+  readonly map?: DataMap
+  readonly raw: any
+  readonly throw?: true
 }
 
 /**
  * The bridge turns errors into these objects.
  */
 export type PackedError = {
-  +base: string | null
+  readonly base: string | null
 } & PackedData // Object properties
 
 /**
  * Prepares a value for sending over the wire.
  */
-export function packData (table: ObjectTable, data: mixed): PackedData {
+export function packData (table: ObjectTable, data: unknown): PackedData {
   try {
     const map = mapData(table, data)
     const raw = packItem(table, map, data)
@@ -79,7 +70,7 @@ export function packData (table: ObjectTable, data: mixed): PackedData {
 /**
  * Prepares a thrown value for sending over the wire.
  */
-export function packThrow (table: ObjectTable, data: mixed): PackedData {
+export function packThrow (table: ObjectTable, data: unknown): PackedData {
   const map = mapData(table, data)
   const raw = packItem(table, map, data)
   return { map, raw, throw: true }
@@ -103,7 +94,7 @@ export function unpackData (
  * Searches through a value, looking for data we can't send directly.
  * Returns a map showing where fixes need to take place.
  */
-function mapData (table: ObjectTable, data: mixed): DataMap {
+function mapData (table: ObjectTable, data: any): DataMap {
   switch (typeof data) {
     case 'boolean':
     case 'number':
@@ -128,7 +119,7 @@ function mapData (table: ObjectTable, data: mixed): DataMap {
           }
           if (out !== '') out[i] = map
         }
-        return out
+        return out as any
       }
 
       // Data objects:
@@ -140,7 +131,7 @@ function mapData (table: ObjectTable, data: mixed): DataMap {
           out[n] = map
         }
       }
-      return out
+      return out as any
 
     case 'undefined':
       return 'u'
@@ -158,7 +149,7 @@ function mapData (table: ObjectTable, data: mixed): DataMap {
 /**
  * Breaks down an error object into a JSON representation.
  */
-function packError (table: ObjectTable, o: Object): PackedError {
+function packError (table: ObjectTable, o: Error): PackedError {
   // Grab the properties off the object:
   const { message, stack } = o
   const props = { message, stack, ...o }
@@ -178,7 +169,7 @@ function packError (table: ObjectTable, o: Object): PackedError {
 /**
  * Copies a value, removing any API objects identified in the types.
  */
-function packItem (table: ObjectTable, map: DataMap, data: any): JsonValue {
+function packItem (table: ObjectTable, map: DataMap, data: any): any {
   switch (map) {
     case '':
       return data
@@ -236,13 +227,13 @@ function unpackError (
 
   // Make the object:
   const Base = value.base != null ? bases[value.base] || Error : Error
-  const out: Object = new Base()
+  const out: object = new Base()
 
   // Restore the properties:
   const props = unpackData(table, value, path)
   for (const n in props) out[n] = props[n]
 
-  return out
+  return out as Error
 }
 
 /**

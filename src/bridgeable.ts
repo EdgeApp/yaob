@@ -1,8 +1,8 @@
 // @flow
 
-import { bridgifyClass, shareData } from './magic.js'
-import type { Subscriber } from './manage.js'
-import { addListener, addWatcher, close, emit, update } from './manage.js'
+import { bridgifyClass, shareData } from './magic'
+import { Subscriber } from './manage'
+import { addListener, addWatcher, close, emit, update } from './manage'
 
 /**
  * The `on` function,
@@ -25,29 +25,28 @@ shareData({ onMethod, watchMethod })
 /**
  * The base class for all bridgeable API's. Provides callback capability.
  */
-export class Bridgeable<Props: {} = {}, Events: {} = {}> {
-  +on: Subscriber<Events>
-  +watch: Subscriber<Props>
+export class Bridgeable<Events extends {} = {}> {
+  readonly on: Subscriber<Events>
+  readonly watch: Subscriber<this>
+
+  constructor () {
+    this.on = onMethod as any
+    this.watch = watchMethod as any
+  }
 
   _close () {
     close(this)
   }
 
-  _emit<Name: $Keys<Events>> (
+  _emit<Name extends keyof Events & string> (
     name: Name,
-    payload: $ElementType<Events, Name>
-  ): mixed {
+    payload: Events[Name]
+  ): unknown {
     return emit(this, name, payload)
   }
 
-  _update (name?: $Keys<Props>) {
+  _update (name?: keyof this & string) {
     update(this, name)
   }
 }
-
-// Put the shared methods onto the prototype:
-const hack: any = Bridgeable.prototype
-hack.on = onMethod
-hack.watch = watchMethod
-
 bridgifyClass(Bridgeable)

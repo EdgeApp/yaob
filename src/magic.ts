@@ -5,7 +5,7 @@
  * This file contains routines for working with these magic properties.
  */
 
-import type { BridgeState } from './state.js'
+import { BridgeState } from './state'
 
 // An object is bridgeable if it has this key:
 export const MAGIC_KEY = '_yaob'
@@ -20,19 +20,19 @@ export type ClassMagic = {}
  */
 type ObjectMagic = {
   // The object id on this side of the bridge:
-  +localId: number,
+  readonly localId: number
 
   // The object is no longer bridgeable when set:
-  closed?: true,
+  closed?: true
 
   // Bridges subscribed to this object:
-  bridges: Array<BridgeState>,
+  bridges: Array<BridgeState>
 
   // Event listeners subscribed to this object:
-  listeners: { [name: string]: Array<Function> },
+  listeners: { [name: string]: Array<Function> }
 
   // Property watchers subscribed to this object:
-  watchers: { [name: string]: { data: mixed, fs: Array<Function> } }
+  watchers: { [name: string]: { data: unknown; fs: Array<Function> } }
 }
 
 /**
@@ -40,31 +40,31 @@ type ObjectMagic = {
  */
 export type InstanceMagic = ObjectMagic & {
   // This is a proxy object if set. See ProxyMagic for other properties:
-  +remoteId?: number
+  readonly remoteId?: number
 }
 
 /**
  * Magic data found on proxy objects.
  */
 export type ProxyMagic = ObjectMagic & {
-  +remoteId: number,
+  readonly remoteId: number
 
   // True if the property getter should throw the value:
-  +errors: { [name: string]: boolean },
+  readonly errors: { [name: string]: boolean }
 
   // Values for property getters to return:
-  +props: { [name: string]: mixed }
+  readonly props: { [name: string]: unknown }
 }
 
 /**
  * Magic data found on shared props.
  */
 export type SharedMagic = {
-  +shareId: string
+  readonly shareId: string
 }
 
 let nextLocalId = 1
-export const sharedData: { [sharedId: string]: mixed } = {}
+export const sharedData: { [sharedId: string]: unknown } = {}
 
 /**
  * Adds or updates an object's magic data.
@@ -80,7 +80,7 @@ function addMagic (o: Object, magic: ClassMagic | ObjectMagic | SharedMagic) {
 /**
  * Makes a class bridgeable, including anything derived from it.
  */
-export function bridgifyClass (Class: Function): mixed {
+export function bridgifyClass (Class: Function): unknown {
   const o = Class.prototype
   if (!Object.prototype.hasOwnProperty.call(o, MAGIC_KEY)) {
     const magic: ClassMagic = {}
@@ -91,7 +91,7 @@ export function bridgifyClass (Class: Function): mixed {
 /**
  * Makes an object instance bridgeable.
  */
-export function bridgifyObject (o: Object): mixed {
+export function bridgifyObject (o: Object): unknown {
   if (
     !Object.prototype.hasOwnProperty.call(o, MAGIC_KEY) ||
     o[MAGIC_KEY].localId == null

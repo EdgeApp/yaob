@@ -4,19 +4,19 @@
  * Functions for managing updates, events, and object lifetime.
  */
 
-import { getInstanceMagic } from './magic.js'
+import { getInstanceMagic } from './magic'
 
 /**
  * Undoes the effect of `on`.
  */
-export type CallbackRemover = () => mixed
+export type CallbackRemover = () => unknown
 
 /**
  * Signature of the `on` method.
  */
-export type Subscriber<Events: {} = {}> = <Name: $Keys<Events>>(
+export type Subscriber < Events extends {} = {} > = <Name extends keyof Events>(
   name: Name,
-  f: (v: $ElementType<Events, Name>) => mixed
+  f: (v: Events[Name]) => unknown
 ) => CallbackRemover
 
 // No user-supplied value will ever be identical to this.
@@ -68,7 +68,7 @@ export function addWatcher (
  * The remote client will completely forget about this object,
  * and accessing it will become an error.
  */
-export function close (o: Object): mixed {
+export function close (o: Object): unknown {
   const magic = getInstanceMagic(o)
 
   magic.closed = true
@@ -81,7 +81,7 @@ export function close (o: Object): mixed {
 /**
  * Emits an event on a bridgeable object.
  */
-export function emit (o: Object, name: string, payload: mixed): mixed {
+export function emit (o: Object, name: string, payload: unknown): unknown {
   const magic = getInstanceMagic(o)
 
   // Schedule outgoing event messages:
@@ -101,7 +101,7 @@ export function emit (o: Object, name: string, payload: mixed): mixed {
 /**
  * Marks an object as having changes. The proxy server will send an update.
  */
-export function update<T: {}> (o: T, name?: $Keys<T>): mixed {
+export function update<T extends {}> (o: T, name?: keyof T & string): unknown {
   const magic = getInstanceMagic(o)
 
   for (const bridge of magic.bridges) {
@@ -132,7 +132,7 @@ export function update<T: {}> (o: T, name?: $Keys<T>): mixed {
 export function callCallback (
   o: Object,
   f: Function,
-  payload: mixed,
+  payload: unknown,
   emitError: boolean
 ) {
   try {
