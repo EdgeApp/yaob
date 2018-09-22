@@ -50,10 +50,8 @@ export function addWatcher (
 ): CallbackRemover {
   const { watchers } = getInstanceMagic(o)
 
-  // Call the callback once.
   // Don't catch access errors, since we want the user to see them:
   const data = o[name]
-  callCallback(o, f, data, true)
 
   if (watchers[name] == null) watchers[name] = { data, fs: [f] }
   else watchers[name].fs.push(f)
