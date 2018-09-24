@@ -30,8 +30,9 @@ export function addListener (
   name: string,
   f: Function
 ): CallbackRemover {
-  const { listeners } = getInstanceMagic(o)
+  const { closed, listeners } = getInstanceMagic(o)
 
+  if (closed) return () => {}
   if (listeners[name] == null) listeners[name] = [f]
   else listeners[name].push(f)
 
@@ -48,13 +49,12 @@ export function addWatcher (
   name: string,
   f: Function
 ): CallbackRemover {
-  const { watchers } = getInstanceMagic(o)
+  const { closed, watchers } = getInstanceMagic(o)
 
-  // Call the callback once.
   // Don't catch access errors, since we want the user to see them:
   const data = o[name]
-  callCallback(o, f, data, true)
 
+  if (closed) return () => {}
   if (watchers[name] == null) watchers[name] = { data, fs: [f] }
   else watchers[name].fs.push(f)
 
@@ -76,6 +76,8 @@ export function close (o: Object): mixed {
     bridge.emitClose(magic.localId)
   }
   magic.bridges = []
+  magic.listeners = {}
+  magic.watchers = {}
 }
 
 /**
@@ -83,6 +85,7 @@ export function close (o: Object): mixed {
  */
 export function emit (o: Object, name: string, payload: mixed): mixed {
   const magic = getInstanceMagic(o)
+  if (magic.closed) throw new Error('Cannot emit event on closed object')
 
   // Schedule outgoing event messages:
   for (const bridge of magic.bridges) {
@@ -103,6 +106,7 @@ export function emit (o: Object, name: string, payload: mixed): mixed {
  */
 export function update<T: {}> (o: T, name?: $Keys<T>): mixed {
   const magic = getInstanceMagic(o)
+  if (magic.closed) throw new Error('Cannot update closed object')
 
   for (const bridge of magic.bridges) {
     bridge.markDirty(magic.localId, name)
