@@ -21,9 +21,7 @@ These API objects can also have dynamic properties. If the properties change on 
 
 ### Bridgeable Objects
 
-To pass over the bridge, objects should inherit from the `Bridgeable` base class. These Bridgeable objects can contain async methods and getter functions, which the `yaob` library will bridge across the messaging interface. This is the only place functions are allowed. If the API tries to pass function objects directly, `yaob` won't be able to handle them and will throw an error.
-
-Here is an example of a simple bridgeable object:
+To pass over the bridge, objects should inherit from the `Bridgeable` base class. Here is an example:
 
 ```js
 import { Bridgeable } from 'yaob'
@@ -42,6 +40,8 @@ class WorkerApi extends Bridgeable {
   }
 }
 ```
+
+These Bridgeable objects can contain properties, getter functions, and async methods, which the `yaob` library will bridge across the messaging interface. This is the only place functions are allowed. If the API tries to pass function objects directly, `yaob` won't be able to handle them and will throw an error.
 
 The `yaob` library will not bridge property or method names that begin with an underscore. This means that `this._multiplier` will not be visible to the client. The client will only see the `double` method and the `version` getter. This provides a simple way to make things private.
 
@@ -136,7 +136,7 @@ someObject.watch('list', newValue => console.log(newValue))
 
 The first parameter is the property name, and the second parameter is the callback. The callback will fire once with the initial value, and then again any time the property changes. The object must use `this.update()` to trigger the changes, as described above.
 
-The `on` method returns an `unsubscribe` function. You can use this to unsubscribe at any time.
+The `watch` method returns an `unsubscribe` function. You can use this to unsubscribe at any time.
 
 ### Events
 
