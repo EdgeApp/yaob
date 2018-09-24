@@ -19,7 +19,7 @@
   "module": "lib/yaob.mjs",
   "scripts": {
     "build": "rimraf lib && rollup -c",
-    "build:test": "rollup -c rollup.config.test.js",
+    "build:test": "rollup -c test/rollup.config.js",
     "precommit": "lint-staged && flow && npm test && npm run build",
     "flow": "flow",
     "format": "import-sort -l --write '*.js' 'src/**/*.js' 'test/**/*.js';prettier-eslint --write '*.js' 'src/**/*.js' 'test/**/*.js'",
