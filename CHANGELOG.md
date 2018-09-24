@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.1 (2018-09-24)
+
 - Improve documentation.
 - Upgrade to Babel 7 (shrinks the build from 4.5K to 3.8K).
 
