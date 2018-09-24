@@ -2,7 +2,7 @@
 
 import { packData, unpackData } from './data.js'
 import { addListener } from './manage.js'
-import { type Message } from './messages.js'
+import { type Message } from './protocol.js'
 import { BridgeState } from './state.js'
 
 /**

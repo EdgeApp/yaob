@@ -4,14 +4,6 @@ import type { BridgeOptions, SendMessage } from './bridge.js'
 import { type ObjectTable, packData, packThrow, unpackData } from './data.js'
 import { bridgifyClass, getInstanceMagic } from './magic.js'
 import { close, emit, update } from './manage.js'
-import type {
-  CallMessage,
-  ChangeMessage,
-  CreateMessage,
-  EventMessage,
-  Message,
-  ReturnMessage
-} from './messages.js'
 import {
   type ValueCache,
   diffObject,
@@ -20,6 +12,14 @@ import {
   packObject,
   updateObjectProps
 } from './objects.js'
+import type {
+  CallMessage,
+  ChangeMessage,
+  CreateMessage,
+  EventMessage,
+  Message,
+  ReturnMessage
+} from './protocol.js'
 
 export class BridgeState implements ObjectTable {
   // Objects:
