@@ -170,7 +170,6 @@ describe('bridging', function () {
     expect(local.flag).equals(false)
     local.on('event', x => log('got event', x))
     local.watch('flag', x => log('got flag', x))
-    log.assert(['got flag false'])
 
     // Quickly try the basics:
     remote._emit('event', 1)

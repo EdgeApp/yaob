@@ -134,7 +134,7 @@ To receive a callback any time a property changes, use the `watch` method, which
 someObject.watch('list', newValue => console.log(newValue))
 ```
 
-The first parameter is the property name, and the second parameter is the callback. The callback will fire once with the initial value, and then again any time the property changes. The object must use `this.update()` to trigger the changes, as described above.
+The first parameter is the property name, and the second parameter is the callback. The callback will fire any time the property changes. The object must use `this._update()` to trigger the changes, as described above.
 
 The `watch` method returns an `unsubscribe` function. You can use this to unsubscribe at any time.
 

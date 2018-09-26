@@ -37,7 +37,6 @@ describe('updating', function () {
     expect(local.count).equals(0)
     local.watch('count', count => log('local', count))
     remote.watch('count', count => log('remote', count))
-    log.assert(['local 0', 'remote 0'])
 
     // Client-triggered mutation should reflect locally:
     expect(await local.increment(1)).equals(1)
@@ -91,7 +90,6 @@ describe('updating', function () {
     expect(local.list).deep.equals([])
     local.watch('list', list => log('local', list.length))
     remote.watch('list', list => log('remote', list.length))
-    log.assert(['local 0', 'remote 0'])
 
     // Client-triggered mutation should reflect locally:
     expect(await local.push(1)).deep.equals([1])
@@ -145,7 +143,6 @@ describe('updating', function () {
     expect(local.count).equals(0)
     expect(local.list).deep.equals([])
     local.watch('count', count => log('local', count))
-    log.assert(['local 0'])
 
     // Changes before destruction should still come across:
     expect(await local.close()).equals(1)

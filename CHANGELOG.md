@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.3.0 (2018-09-26)
+
+* Do not call the `watch` callback initially (breaking change).
+* Unsubscribe all callbacks when objects close (breaking change).
+
 ## 0.2.1 (2018-09-24)
 
 - Improve documentation.
