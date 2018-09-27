@@ -51,6 +51,7 @@ describe('packData', function () {
       [1, { raw: 1 }],
       ['blah', { raw: 'blah' }],
       [void 0, { map: 'u', raw: null }],
+      [new Date(1500000000000), { map: 'd', raw: '2017-07-14T02:40:00.000Z' }],
 
       // Arrays:
       [[0, 1], { raw: [0, 1] }],
@@ -152,6 +153,7 @@ describe('unpackData', function () {
       [1, { raw: 1 }],
       ['blah', { raw: 'blah' }],
       [void 0, { map: 'u', raw: null }],
+      [new Date(1500000000000), { map: 'd', raw: '2017-07-14T02:40:00.000Z' }],
 
       // Arrays:
       [[0, 1], { raw: [0, 1] }],
