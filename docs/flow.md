@@ -63,6 +63,8 @@ export class RootApi extends Bridgeable<Root, RootEvents> {
 }
 ```
 
+The `Bridgeable` base class takes two type parameters. The first type parameter lists the properties `watch` can subscribe to, and the second type parameter lists the events `on` can subscribe to.
+
 To verify that this class correctly implements the client-facing `Root` type, cast the root instance before sending it over the bridge:
 
 ```typescript
@@ -75,5 +77,3 @@ server.sendRoot(root)
 ```
 
 If the implementation differs in any way from the client-facing types, Flow will give an appropriate error.
-
-The `Bridgeable` base class takes two type parameters. The first type parameter lists the properties `watch` can subscribe to, and the second type parameter lists the events `on` can subscribe to.
