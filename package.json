@@ -15,8 +15,8 @@
     "README.md",
     "src/*"
   ],
-  "main": "lib/yaob.js",
-  "module": "lib/yaob.mjs",
+  "main": "lib/yaob.cjs.js",
+  "module": "lib/yaob.js",
   "scripts": {
     "build": "rimraf lib && rollup -c",
     "build:test": "rollup -c test/rollup.config.js",
