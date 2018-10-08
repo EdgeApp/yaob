@@ -27,6 +27,7 @@ export type DataMap =
   | Array<DataMap>
   | '' // No change
   | '?' // Invalid value
+  | 'd' // Date
   | 'e' // Error
   | 'o' // Object
   | 's' // Shared data
@@ -112,6 +113,7 @@ function mapData (table: ObjectTable, data: mixed): DataMap {
 
     case 'object':
       if (data === null) return ''
+      if (data instanceof Date) return 'd'
       if (data instanceof Error) return 'e'
       if (data[MAGIC_KEY] != null) {
         return data[MAGIC_KEY].shareId != null ? 's' : 'o'
@@ -185,6 +187,9 @@ function packItem (table: ObjectTable, map: DataMap, data: any): JsonValue {
 
     case '?':
       return typeof data
+
+    case 'd':
+      return data.toISOString()
 
     case 'e':
       return packError(table, data)
@@ -261,6 +266,9 @@ function unpackItem (
     case '?':
       const type = typeof raw === 'string' ? raw : '?'
       throw new TypeError(`Unsupported value of type ${type} at ${path}`)
+
+    case 'd':
+      return new Date(raw)
 
     case 'e':
       if (typeof raw !== 'object' || raw === null) {
