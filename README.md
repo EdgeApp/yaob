@@ -177,7 +177,7 @@ const unsubscribe = someObject.on('logout', payload => {
 
 Once the server sends an object over the bridge, the object will stick around for the lifetime of the bridge. This is because there is no way of knowing when the client will access the object again. This can leak memory.
 
-If this sort of thing becomes a problem, you can explicitly free objects by calling `this._close()`, which is part of the `Bridgeable` base class. Closing a server-side object will make it un-bridgeable and will destroy the client-side object. Accessing any property or method on the client side will then throw an exception.
+If this sort of thing becomes a problem, you can explicitly free objects by calling `this._close()`, which is part of the `Bridgeable` base class. Closing a server-side object will make it un-bridgeable and will destroy the client-side object. Calling any method on the client side will then throw an exception.
 
 This can also be a useful way to represent logging out of accounts, closing files, or other situations where an API object needs to become unusable.
 

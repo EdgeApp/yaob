@@ -1,6 +1,6 @@
 {
   "name": "yaob",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Bridges an object-oriented API across a messaging layer",
   "repository": {
     "type": "git",
@@ -15,8 +15,8 @@
     "README.md",
     "src/*"
   ],
-  "main": "lib/yaob.js",
-  "module": "lib/yaob.mjs",
+  "main": "lib/yaob.cjs.js",
+  "module": "lib/yaob.js",
   "scripts": {
     "build": "rimraf lib && rollup -c",
     "build:test": "rollup -c test/rollup.config.js",
