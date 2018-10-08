@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.3.1 (2018-10-08)
+
+* Preserve `Date` objects.
+* Do not name the library entry point with an `.mjs` extension.
+
 ## 0.3.0 (2018-09-26)
 
 * Do not call the `watch` callback initially (breaking change).
