@@ -11,6 +11,10 @@ Similar libraries include:
 - [post-robot](https://github.com/krakenjs/post-robot) - Only works with iframes and popup windows.
 - [remote-lib](http://www.remotelib.com/) - Rich functionality, but requires ES6 proxy support.
 
+Yaob is small (under 4K minified and gzipped) and doesn't require any ES6 features besides a `Promise` implementation.
+
+[![Standard.js Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
+
 ## Using
 
 In a typical use-case, a client process, such as a web app, needs some functionality from a server process, such as a Web Worker. The client launches the server process, and the server process sends back an object that contains its API. The client interacts with the server by calling methods on this object.
