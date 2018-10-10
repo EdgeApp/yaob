@@ -194,11 +194,11 @@ describe('unpackData', function () {
       ],
       [
         { map: { bogus: 'o' }, raw: { bogus: 1 } },
-        'RangeError: Invalid packedId at path.bogus'
+        'RangeError: Invalid packedId 1 at path.bogus'
       ],
       [
         { map: { bogus: 'o' }, raw: { bogus: NaN } },
-        'RangeError: Invalid packedId at path.bogus'
+        'RangeError: Invalid packedId NaN at path.bogus'
       ]
     ]
 

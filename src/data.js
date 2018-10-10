@@ -284,7 +284,7 @@ function unpackItem (
         throw new TypeError(`Expecting a packedId at ${path}`)
       }
       const o = table.getObject(-raw)
-      if (o == null) throw new RangeError(`Invalid packedId at ${path}`)
+      if (o == null) throw new RangeError(`Invalid packedId ${raw} at ${path}`)
       return o
 
     case 's':
@@ -292,7 +292,7 @@ function unpackItem (
         throw new TypeError(`Expecting a shareId at ${path}`)
       }
       const s = sharedData[raw]
-      if (s == null) throw new RangeError(`Invalid shareId at ${path}`)
+      if (s == null) throw new RangeError(`Invalid shareId '${raw}' at ${path}`)
       return s
 
     case 'u':
