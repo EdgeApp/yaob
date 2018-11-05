@@ -49,6 +49,7 @@ describe('packData', function () {
       [true, { raw: true }],
       [null, { raw: null }],
       [1, { raw: 1 }],
+      [NaN, { raw: NaN }],
       ['blah', { raw: 'blah' }],
       [void 0, { map: 'u', raw: null }],
       [new Date(1500000000000), { map: 'd', raw: '2017-07-14T02:40:00.000Z' }],
