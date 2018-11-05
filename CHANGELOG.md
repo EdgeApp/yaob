@@ -2,15 +2,19 @@
 
 ## Unreleased
 
+## 0.3.2 (2018-11-20)
+
+- Improve invalid ID error messages.
+
 ## 0.3.1 (2018-10-08)
 
-* Preserve `Date` objects.
-* Do not name the library entry point with an `.mjs` extension.
+- Preserve `Date` objects.
+- Do not name the library entry point with an `.mjs` extension.
 
 ## 0.3.0 (2018-09-26)
 
-* Do not call the `watch` callback initially (breaking change).
-* Unsubscribe all callbacks when objects close (breaking change).
+- Do not call the `watch` callback initially (breaking change).
+- Unsubscribe all callbacks when objects close (breaking change).
 
 ## 0.2.1 (2018-09-24)
 
