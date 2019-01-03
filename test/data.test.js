@@ -42,6 +42,7 @@ describe('packData', function () {
   it('handles simple types', function () {
     const sparseArray = []
     sparseArray[2] = 2
+    const arrayBuffer = Uint8Array.from([1, 2, 3, 4])
 
     const cases: Array<[mixed, PackedData]> = [
       // Primitives:
@@ -58,6 +59,7 @@ describe('packData', function () {
       [[0, 1], { raw: [0, 1] }],
       [[0, void 0], { map: ['', 'u'], raw: [0, null] }],
       [sparseArray, { map: ['u', 'u', ''], raw: [null, null, 2] }],
+      [arrayBuffer, { map: 'u8', raw: 'AQIDBA==' }],
 
       // Objects:
       [{ x: 1, y: 2 }, { raw: { x: 1, y: 2 } }],
@@ -146,6 +148,8 @@ describe('packData', function () {
 
 describe('unpackData', function () {
   it('restores simple types', function () {
+    const arrayBuffer = Uint8Array.from([1, 2, 3, 4])
+
     const cases: Array<[mixed, PackedData]> = [
       // Primitives:
       [false, { raw: false }],
@@ -160,6 +164,7 @@ describe('unpackData', function () {
       [[0, 1], { raw: [0, 1] }],
       [[0, void 0], { map: ['', 'u'], raw: [0, null] }],
       [[void 0, 2], { map: ['u', ''], raw: [null, 2] }],
+      [arrayBuffer, { map: 'u8', raw: 'AQIDBA==' }],
 
       // Objects:
       [{ x: 1, y: 2 }, { raw: { x: 1, y: 2 } }],
