@@ -5,6 +5,8 @@
  * and then restoring those messages into values on the other side.
  */
 
+import { base64 } from 'rfc4648'
+
 import { MAGIC_KEY, sharedData } from './magic.js'
 
 /**
@@ -32,6 +34,7 @@ export type DataMap =
   | 'o' // Object
   | 's' // Shared data
   | 'u' // Undefined
+  | 'u8' // Uint8Array
 
 /**
  * A pure JSON value type.
@@ -115,6 +118,7 @@ function mapData (table: ObjectTable, data: mixed): DataMap {
       if (data === null) return ''
       if (data instanceof Date) return 'd'
       if (data instanceof Error) return 'e'
+      if (data instanceof Uint8Array) return 'u8'
       if (data[MAGIC_KEY] != null) {
         return data[MAGIC_KEY].shareId != null ? 's' : 'o'
       }
@@ -202,6 +206,9 @@ function packItem (table: ObjectTable, map: DataMap, data: any): JsonValue {
 
     case 'u':
       return null
+
+    case 'u8':
+      return base64.stringify(data)
 
     default:
       // Arrays:
@@ -297,6 +304,12 @@ function unpackItem (
 
     case 'u':
       return void 0
+
+    case 'u8':
+      if (typeof raw !== 'string') {
+        throw new TypeError(`Expecting a base64 string at ${path}`)
+      }
+      return base64.parse(raw)
 
     default:
       if (typeof map !== 'object' || map === null) {

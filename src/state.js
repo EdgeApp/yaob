@@ -30,7 +30,7 @@ export class BridgeState implements ObjectTable {
   // Outgoing method calls:
   nextCallId: number
   pendingCalls: {
-    [callId: number]: { resolve: Function, reject: Function }
+    [callId: number]: { name: string, resolve: Function, reject: Function }
   }
 
   // Pending message:
@@ -143,7 +143,7 @@ export class BridgeState implements ObjectTable {
     this.wakeup()
 
     return new Promise((resolve, reject) => {
-      this.pendingCalls[callId] = { resolve, reject }
+      this.pendingCalls[callId] = { name, resolve, reject }
     })
   }
 
@@ -267,7 +267,9 @@ export class BridgeState implements ObjectTable {
           throw new RangeError(`Invalid callId ${callId}`)
         }
         try {
-          pendingCall.resolve(unpackData(this, ret, '<return>'))
+          pendingCall.resolve(
+            unpackData(this, ret, `${pendingCall.name}.return`)
+          )
         } catch (e) {
           pendingCall.reject(e)
         } finally {

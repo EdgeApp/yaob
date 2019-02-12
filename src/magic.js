@@ -80,18 +80,19 @@ function addMagic (o: Object, magic: ClassMagic | ObjectMagic | SharedMagic) {
 /**
  * Makes a class bridgeable, including anything derived from it.
  */
-export function bridgifyClass (Class: Function): mixed {
+export function bridgifyClass<Type: Function> (Class: Type): Type {
   const o = Class.prototype
   if (!Object.prototype.hasOwnProperty.call(o, MAGIC_KEY)) {
     const magic: ClassMagic = {}
     addMagic(o, magic)
   }
+  return Class
 }
 
 /**
  * Makes an object instance bridgeable.
  */
-export function bridgifyObject (o: Object): mixed {
+export function bridgifyObject<Type: Object> (o: Type): Type {
   if (
     !Object.prototype.hasOwnProperty.call(o, MAGIC_KEY) ||
     o[MAGIC_KEY].localId == null
@@ -104,6 +105,7 @@ export function bridgifyObject (o: Object): mixed {
     }
     addMagic(o, magic)
   }
+  return o
 }
 
 /**
