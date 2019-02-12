@@ -1,6 +1,6 @@
 {
   "name": "yaob",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Bridges an object-oriented API across a messaging layer",
   "repository": {
     "type": "git",

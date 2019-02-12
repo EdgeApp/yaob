@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.3.3 (2019-02-11)
+
+- Return the input object from `bridgifyObject` & `bridgifyClass`.
+- Add support for `Uint8Array` objects.
+- Log the method name for failed return values.
+
 ## 0.3.2 (2018-11-20)
 
 - Improve invalid ID error messages.
