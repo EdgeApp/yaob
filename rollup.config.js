@@ -22,6 +22,7 @@ const babelOpts = {
 }
 
 export default {
+  external: Object.keys(packageJson.dependencies),
   input: 'src/index.js',
   output: [
     { file: packageJson.main, format: 'cjs', sourcemap: true },
