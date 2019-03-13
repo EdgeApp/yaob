@@ -113,7 +113,7 @@ export function makeProxy (state: BridgeState, create: CreateMessage): Object {
 
   // Add the getters:
   for (const n in create.props) {
-    props[n] = { get: makeProxyGetter(magic, n) }
+    props[n] = { enumerable: true, get: makeProxyGetter(magic, n) }
   }
 
   // Add the methods:
