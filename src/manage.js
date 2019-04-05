@@ -71,6 +71,14 @@ export function addWatcher (
 export function close (o: Object): mixed {
   const magic = getInstanceMagic(o)
 
+  // Call local callbacks:
+  const listeners = magic.listeners['close']
+  if (listeners != null) {
+    for (const f of listeners) {
+      callCallback(o, f, void 0, true)
+    }
+  }
+
   magic.closed = true
   for (const bridge of magic.bridges) {
     bridge.emitClose(magic.localId)

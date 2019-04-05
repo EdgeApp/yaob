@@ -7,7 +7,7 @@ import { Bridgeable, close, shareData } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
 
-class ChildApi extends Bridgeable<> {
+class ChildApi extends Bridgeable<ChildApi, { close: void }> {
   get answer () {
     return 42
   }
@@ -53,6 +53,7 @@ describe('closing', function () {
     const remote = new ParentApi()
     const local = await makeLoggedBridge(log, remote)
     const child = await local.makeChild()
+    child.on('close', () => log('on close'))
     log.assert(['server +1 e1', 'client c1', 'server +1 r1'])
 
     // We can call child methods:
@@ -62,7 +63,7 @@ describe('closing', function () {
     // Ask the server to close the child:
     await local.closeChild(child)
     await checkDestruction(child)
-    log.assert(['client c1', 'server -1 r1'])
+    log.assert(['client c1', 'server -1 r1', 'on close'])
   })
 
   it('client-side closure', async function () {
@@ -70,13 +71,14 @@ describe('closing', function () {
     const remote = new ParentApi()
     const local = await makeLoggedBridge(log, remote)
     const child = await local.makeChild()
+    child.on('close', () => log('on close'))
     log.assert(['server +1 e1', 'client c1', 'server +1 r1'])
 
     // Deleting local proxies disables property access:
     close(child)
     await checkDestruction(child)
     await delay(10)
-    log.assert([])
+    log.assert(['on close'])
 
     // Cannot send deleted proxies over the bridge:
     await promiseFail(
@@ -90,12 +92,14 @@ describe('closing', function () {
     const log = makeAssertLog()
     const remote = new ChildApi()
     const local = await makeLoggedBridge(log, remote)
+    remote.on('close', () => log('remote on close'))
+    local.on('close', () => log('local on close'))
     log.assert(['server +1 e1'])
 
     // The server closes the object on its own initiative:
     close(remote)
     await delay(10)
     await checkDestruction(local)
-    log.assert(['server -1'])
+    log.assert(['remote on close', 'server -1', 'local on close'])
   })
 })
