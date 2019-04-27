@@ -51,6 +51,10 @@ export class Bridge {
   sendRoot (root: Object) {
     this._state.emitEvent(0, 'root', root)
   }
+
+  close (error: Error) {
+    this._state.close(error)
+  }
 }
 
 /**

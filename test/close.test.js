@@ -3,7 +3,7 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
-import { Bridgeable, close, shareData } from '../src/index.js'
+import { Bridge, Bridgeable, close, shareData } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
 
@@ -101,5 +101,23 @@ describe('closing', function () {
     await delay(10)
     await checkDestruction(local)
     log.assert(['remote on close', 'server -1', 'local on close'])
+  })
+
+  it('bridge closure', async function () {
+    const log = makeAssertLog()
+    const bridge = new Bridge({
+      sendMessage () {
+        log('send')
+      }
+    })
+
+    bridge.sendRoot({ prop: 'prop' })
+
+    await delay(10)
+    bridge.close(new Error('The bridge went away'))
+    bridge.sendRoot({ prop: 'prop' })
+
+    await delay(10)
+    log.assert(['send'])
   })
 })
