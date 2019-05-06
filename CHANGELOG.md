@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.3.4 (2019-05-06)
+
+- Add a `close` method to the `Bridge` object.
+- Emit a `close` event when objects close.
+- Make proxy properties enumerable.
+
 ## 0.3.3 (2019-02-11)
 
 - Return the input object from `bridgifyObject` & `bridgifyClass`.
