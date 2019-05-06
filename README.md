@@ -152,7 +152,7 @@ someObject.on('login', username => {
 })
 ```
 
-The bridge will emit an `error` event any time an event callback throws an exception.
+The bridge will emit an `error` event any time an event callback throws an exception, and will emit a `close` event when objects are closed.
 
 Use the `_emit` method to send events, which is part of the `Bridgeable` base class:
 

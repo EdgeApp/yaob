@@ -38,6 +38,7 @@ export class BridgeState implements ObjectTable {
   message: Message
 
   // Update scheduling:
+  closed: boolean
   +throttleMs: number
   lastUpdate: number
   sendPending: boolean
@@ -64,6 +65,22 @@ export class BridgeState implements ObjectTable {
     this.lastUpdate = 0
     this.sendPending = false
     this.sendMessage = sendMessage
+  }
+
+  /**
+   * Close the bridge, so it will no longer send messages.
+   * This also closes all proxies created by the bridge and rejects
+   * all pending calls.
+   */
+  close (error: Error) {
+    for (const callId in this.pendingCalls) {
+      const call = this.pendingCalls[Number(callId)]
+      call.reject(error)
+    }
+    for (const objectId in this.proxies) {
+      close(this.proxies[Number(objectId)])
+    }
+    this.closed = true
   }
 
   /**
@@ -296,6 +313,8 @@ export class BridgeState implements ObjectTable {
    * Sends the current message.
    */
   sendNow () {
+    if (this.closed) return
+
     // Build change messages:
     for (const id in this.dirty) {
       const localId = Number(id)
