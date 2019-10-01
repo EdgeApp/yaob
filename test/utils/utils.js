@@ -23,7 +23,7 @@ export function promiseFail(
  * Creates a local client / server bridge with logging.
  */
 export function makeLoggedBridge<T: Object>(
-  log: string => mixed,
+  log: (message: string) => mixed,
   root: T
 ): Promise<T> {
   function describeMessage(message): string {

@@ -18,13 +18,13 @@ describe('updating', function() {
         this.count = 0
       }
 
-      increment(step: number) {
+      increment(step: number): number {
         this.count = this.count + step
         update(this)
         return this.count
       }
 
-      incrementWithoutUpdate(step: number) {
+      incrementWithoutUpdate(step: number): number {
         this.count = this.count + step
         return this.count
       }
@@ -65,19 +65,19 @@ describe('updating', function() {
         this.list = []
       }
 
-      push(item: number) {
+      push(item: number): Array<number> {
         this.list.push(item)
         update(this, 'list')
         return this.list
       }
 
-      pushWithGeneralUpdate(item: number) {
+      pushWithGeneralUpdate(item: number): Array<number> {
         this.list.push(item)
         update(this)
         return this.list
       }
 
-      pushWithoutUpdate(item: number) {
+      pushWithoutUpdate(item: number): Array<number> {
         this.list.push(item)
         return this.list
       }
@@ -128,7 +128,7 @@ describe('updating', function() {
         this.list = []
       }
 
-      close() {
+      close(): number {
         this.count += 1
         this.list.push(this.count)
         this._update('list')
