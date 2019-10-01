@@ -8,7 +8,7 @@ import { addListener, addWatcher, close, emit, update } from './manage.js'
  * The `on` function,
  * but packaged as a method and ready to be placed on an object.
  */
-export const onMethod: Function = function on (name, f) {
+export const onMethod: Function = function on(name, f) {
   return addListener(this, name, f)
 }
 
@@ -16,7 +16,7 @@ export const onMethod: Function = function on (name, f) {
  * The `watch` function,
  * but packaged as a method and ready to be placed on an object.
  */
-export const watchMethod: Function = function watch (name, f) {
+export const watchMethod: Function = function watch(name, f) {
   return addWatcher(this, name, f)
 }
 
@@ -29,18 +29,18 @@ export class Bridgeable<Props: {} = {}, Events: {} = {}> {
   +on: Subscriber<Events>
   +watch: Subscriber<Props>
 
-  _close () {
+  _close() {
     close(this)
   }
 
-  _emit<Name: $Keys<Events>> (
+  _emit<Name: $Keys<Events>>(
     name: Name,
     payload: $ElementType<Events, Name>
   ): mixed {
     return emit(this, name, payload)
   }
 
-  _update (name?: $Keys<Props>) {
+  _update(name?: $Keys<Props>) {
     update(this, name)
   }
 }

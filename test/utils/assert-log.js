@@ -27,11 +27,11 @@ export type AssertLog = ((...args: Array<mixed>) => mixed) & {
  * @param sort True to ignore the order of events.
  * @param verbose True to also send all logged events to the console.
  */
-export function makeAssertLog (opts: AssertLogOptions = {}): AssertLog {
+export function makeAssertLog(opts: AssertLogOptions = {}): AssertLog {
   const { ignoreOrder = false, verbose = false } = opts
   let events: Array<string> = []
 
-  const out: any = function log () {
+  const out: any = function log() {
     let event = ''
     for (let i = 0; i < arguments.length; ++i) {
       const arg = arguments[i]
@@ -43,14 +43,14 @@ export function makeAssertLog (opts: AssertLogOptions = {}): AssertLog {
     events.push(event)
   }
 
-  out.assert = function assert (expected: Array<string>) {
+  out.assert = function assert(expected: Array<string>) {
     ignoreOrder
       ? expect(events.sort()).to.deep.equal(expected.sort())
       : expect(events).to.deep.equal(expected)
     events = []
   }
 
-  out.clear = function clear () {
+  out.clear = function clear() {
     events = []
   }
 

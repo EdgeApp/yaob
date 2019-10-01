@@ -18,16 +18,16 @@ class MockTable implements ObjectTable {
   objects: Array<Object>
   proxies: Array<Object>
 
-  constructor () {
+  constructor() {
     this.objects = []
     this.proxies = []
   }
 
-  getObject (packedId: number) {
+  getObject(packedId: number) {
     return packedId < 0 ? this.proxies[-packedId] : this.objects[packedId]
   }
 
-  getPackedId (o: Object) {
+  getPackedId(o: Object) {
     const magic = o[MAGIC_KEY]
     if (magic == null) throw new TypeError('Not a bridgeable object')
     if (magic.closed) return null
@@ -38,8 +38,8 @@ class MockTable implements ObjectTable {
 
 const emptyTable = new MockTable()
 
-describe('packData', function () {
-  it('handles simple types', function () {
+describe('packData', function() {
+  it('handles simple types', function() {
     const sparseArray = []
     sparseArray[2] = 2
     const arrayBuffer = Uint8Array.from([1, 2, 3, 4])
@@ -67,7 +67,7 @@ describe('packData', function () {
 
       // Invalid types:
       [() => {}, { map: '?', raw: 'function' }],
-      [{ x: 1, y () {} }, { map: { y: '?' }, raw: { x: 1, y: 'function' } }]
+      [{ x: 1, y() {} }, { map: { y: '?' }, raw: { x: 1, y: 'function' } }]
     ]
 
     for (const [data, packed] of cases) {
@@ -75,13 +75,13 @@ describe('packData', function () {
     }
   })
 
-  it('handles error types', function () {
+  it('handles error types', function() {
     // Builtin errors:
     const error = new Error('e')
     const typeError = new TypeError('type')
 
     // Complex error:
-    function PayloadError (payload: Object, message: string): Error {
+    function PayloadError(payload: Object, message: string): Error {
       const e: Object = new Error(message)
       e.payload = payload
       e.name = 'PayloadError'
@@ -125,7 +125,7 @@ describe('packData', function () {
     }
   })
 
-  it('handles bridgeable objects', function () {
+  it('handles bridgeable objects', function() {
     const o1 = {}
     const o2 = {}
     const o3 = {}
@@ -146,8 +146,8 @@ describe('packData', function () {
   })
 })
 
-describe('unpackData', function () {
-  it('restores simple types', function () {
+describe('unpackData', function() {
+  it('restores simple types', function() {
     const arrayBuffer = Uint8Array.from([1, 2, 3, 4])
 
     const cases: Array<[mixed, PackedData]> = [
@@ -176,7 +176,7 @@ describe('unpackData', function () {
     }
   })
 
-  it('throws for invalid types', function () {
+  it('throws for invalid types', function() {
     const cases: Array<[PackedData, string]> = [
       [
         { map: '?', raw: 'function' },
@@ -218,7 +218,7 @@ describe('unpackData', function () {
     }
   })
 
-  it('restores Error payload', function () {
+  it('restores Error payload', function() {
     const stack = new Error().stack
     const packed = {
       map: 'e',
@@ -241,7 +241,7 @@ describe('unpackData', function () {
     expect(e.name).equals('PayloadError')
   })
 
-  it('restores TypeError', function () {
+  it('restores TypeError', function() {
     const stack = new TypeError().stack
     const packed = {
       map: 'e',
@@ -257,7 +257,7 @@ describe('unpackData', function () {
     expect(e.name).equals('TypeError')
   })
 
-  it('restores proxy types', function () {
+  it('restores proxy types', function() {
     const table = new MockTable()
 
     const o1 = {}

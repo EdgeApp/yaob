@@ -69,7 +69,7 @@ export const sharedData: { [sharedId: string]: mixed } = {}
 /**
  * Adds or updates an object's magic data.
  */
-function addMagic (o: Object, magic: ClassMagic | ObjectMagic | SharedMagic) {
+function addMagic(o: Object, magic: ClassMagic | ObjectMagic | SharedMagic) {
   if (Object.prototype.hasOwnProperty.call(o, MAGIC_KEY)) {
     Object.assign(o[MAGIC_KEY], magic)
   } else {
@@ -80,7 +80,7 @@ function addMagic (o: Object, magic: ClassMagic | ObjectMagic | SharedMagic) {
 /**
  * Makes a class bridgeable, including anything derived from it.
  */
-export function bridgifyClass<Type: Function> (Class: Type): Type {
+export function bridgifyClass<Type: Function>(Class: Type): Type {
   const o = Class.prototype
   if (!Object.prototype.hasOwnProperty.call(o, MAGIC_KEY)) {
     const magic: ClassMagic = {}
@@ -92,7 +92,7 @@ export function bridgifyClass<Type: Function> (Class: Type): Type {
 /**
  * Makes an object instance bridgeable.
  */
-export function bridgifyObject<Type: Object> (o: Type): Type {
+export function bridgifyObject<Type: Object>(o: Type): Type {
   if (
     !Object.prototype.hasOwnProperty.call(o, MAGIC_KEY) ||
     o[MAGIC_KEY].localId == null
@@ -111,7 +111,7 @@ export function bridgifyObject<Type: Object> (o: Type): Type {
 /**
  * Gets the magic data from an object instance.
  */
-export function getInstanceMagic (o: Object): InstanceMagic {
+export function getInstanceMagic(o: Object): InstanceMagic {
   // We only want to look at bridgeable objects:
   if (o[MAGIC_KEY] == null) throw new TypeError('Not a bridgeable object')
 
@@ -122,7 +122,7 @@ export function getInstanceMagic (o: Object): InstanceMagic {
 /**
  * Creates a new `ProxyMagic` object.
  */
-export function makeProxyMagic (remoteId: number): ProxyMagic {
+export function makeProxyMagic(remoteId: number): ProxyMagic {
   return {
     // InstanceMagic:
     localId: nextLocalId++,
@@ -139,7 +139,7 @@ export function makeProxyMagic (remoteId: number): ProxyMagic {
 /**
  * Adds items to the global shared data table.
  */
-export function shareData (
+export function shareData(
   table: { [name: string]: Object },
   namespace?: string
 ) {
