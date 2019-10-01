@@ -27,6 +27,18 @@
     "pretest": "npm run build:test",
     "test": "mocha --require source-map-support/register build/tests.js"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged && flow && npm test && npm run build"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint",
+      "import-sort --list-different",
+      "prettier-eslint --list-different"
+    ]
+  },
   "dependencies": {
     "rfc4648": "^1.1.0"
   },
@@ -59,22 +71,10 @@
     "rollup-plugin-flow-entry": "^0.2.0",
     "source-map-support": "^0.5.6"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged && flow && npm test && npm run build"
-    }
-  },
   "importSort": {
     ".js, .es": {
       "parser": "babylon",
       "style": "module"
     }
-  },
-  "lint-staged": {
-    "*.js": [
-      "eslint",
-      "import-sort --list-different",
-      "prettier-eslint --list-different"
-    ]
   }
 }
