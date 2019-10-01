@@ -52,18 +52,18 @@ describe('packData', function () {
       [1, { raw: 1 }],
       [NaN, { raw: NaN }],
       ['blah', { raw: 'blah' }],
-      [void 0, { map: 'u', raw: null }],
+      [undefined, { map: 'u', raw: null }],
       [new Date(1500000000000), { map: 'd', raw: '2017-07-14T02:40:00.000Z' }],
 
       // Arrays:
       [[0, 1], { raw: [0, 1] }],
-      [[0, void 0], { map: ['', 'u'], raw: [0, null] }],
+      [[0, undefined], { map: ['', 'u'], raw: [0, null] }],
       [sparseArray, { map: ['u', 'u', ''], raw: [null, null, 2] }],
       [arrayBuffer, { map: 'u8', raw: 'AQIDBA==' }],
 
       // Objects:
       [{ x: 1, y: 2 }, { raw: { x: 1, y: 2 } }],
-      [{ x: 1, y: void 0 }, { map: { y: 'u' }, raw: { x: 1, y: null } }],
+      [{ x: 1, y: undefined }, { map: { y: 'u' }, raw: { x: 1, y: null } }],
 
       // Invalid types:
       [() => {}, { map: '?', raw: 'function' }],
@@ -87,7 +87,7 @@ describe('packData', function () {
       e.name = 'PayloadError'
       return e
     }
-    const payloadError = new PayloadError({ x: void 0, y: 1 }, 'payload')
+    const payloadError = new PayloadError({ x: undefined, y: 1 }, 'payload')
 
     const cases: Array<[mixed, PackedData]> = [
       [
@@ -157,18 +157,18 @@ describe('unpackData', function () {
       [null, { raw: null }],
       [1, { raw: 1 }],
       ['blah', { raw: 'blah' }],
-      [void 0, { map: 'u', raw: null }],
+      [undefined, { map: 'u', raw: null }],
       [new Date(1500000000000), { map: 'd', raw: '2017-07-14T02:40:00.000Z' }],
 
       // Arrays:
       [[0, 1], { raw: [0, 1] }],
-      [[0, void 0], { map: ['', 'u'], raw: [0, null] }],
-      [[void 0, 2], { map: ['u', ''], raw: [null, 2] }],
+      [[0, undefined], { map: ['', 'u'], raw: [0, null] }],
+      [[undefined, 2], { map: ['u', ''], raw: [null, 2] }],
       [arrayBuffer, { map: 'u8', raw: 'AQIDBA==' }],
 
       // Objects:
       [{ x: 1, y: 2 }, { raw: { x: 1, y: 2 } }],
-      [{ x: 1, y: void 0 }, { map: { y: 'u' }, raw: { x: 1, y: null } }]
+      [{ x: 1, y: undefined }, { map: { y: 'u' }, raw: { x: 1, y: null } }]
     ]
 
     for (const [data, packed] of cases) {
@@ -237,7 +237,7 @@ describe('unpackData', function () {
     const e = unpackData(emptyTable, packed, 'error')
     expect(e).instanceof(Error)
     expect(e.message).equals('m')
-    expect(e.payload).deep.equals({ x: void 0, y: 1 })
+    expect(e.payload).deep.equals({ x: undefined, y: 1 })
     expect(e.name).equals('PayloadError')
   })
 

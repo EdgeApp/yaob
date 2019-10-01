@@ -1,3 +1,4 @@
+/* global setTimeout */
 // @flow
 
 import { expect } from 'chai'

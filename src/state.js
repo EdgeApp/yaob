@@ -1,3 +1,4 @@
+/* global setTimeout */
 // @flow
 
 import type { BridgeOptions, SendMessage } from './bridge.js'

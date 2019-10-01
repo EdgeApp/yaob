@@ -72,10 +72,10 @@ export function close (o: Object): mixed {
   const magic = getInstanceMagic(o)
 
   // Call local callbacks:
-  const listeners = magic.listeners['close']
+  const listeners = magic.listeners.close
   if (listeners != null) {
     for (const f of listeners) {
-      callCallback(o, f, void 0, true)
+      callCallback(o, f, undefined, true)
     }
   }
 
@@ -152,7 +152,7 @@ export function callCallback (
 
     // If the function returns a promise, emit an error if it rejects:
     if (emitError && out != null && typeof out.then === 'function') {
-      out.then(void 0, e => emit(o, 'error', e))
+      out.then(undefined, e => emit(o, 'error', e))
     }
   } catch (e) {
     if (emitError) emit(o, 'error', e)

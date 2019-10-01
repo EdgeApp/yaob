@@ -114,7 +114,7 @@ function mapData (table: ObjectTable, data: mixed): DataMap {
     case 'string':
       return ''
 
-    case 'object':
+    case 'object': {
       if (data === null) return ''
       if (data instanceof Date) return 'd'
       if (data instanceof Error) return 'e'
@@ -147,6 +147,7 @@ function mapData (table: ObjectTable, data: mixed): DataMap {
         }
       }
       return out
+    }
 
     case 'undefined':
       return 'u'
@@ -210,7 +211,7 @@ function packItem (table: ObjectTable, map: DataMap, data: any): JsonValue {
     case 'u8':
       return base64.stringify(data)
 
-    default:
+    default: {
       // Arrays:
       if (Array.isArray(map)) {
         const out = []
@@ -226,6 +227,7 @@ function packItem (table: ObjectTable, map: DataMap, data: any): JsonValue {
         out[n] = n in map ? packItem(table, map[n], data[n]) : data[n]
       }
       return out
+    }
   }
 }
 
@@ -270,9 +272,10 @@ function unpackItem (
     case '':
       return raw
 
-    case '?':
+    case '?': {
       const type = typeof raw === 'string' ? raw : '?'
       throw new TypeError(`Unsupported value of type ${type} at ${path}`)
+    }
 
     case 'd':
       return new Date(raw)
@@ -283,7 +286,7 @@ function unpackItem (
       }
       return unpackError(table, raw, path)
 
-    case 'o':
+    case 'o': {
       if (raw === null) {
         throw new TypeError(`Closed bridge object at ${path}`)
       }
@@ -293,17 +296,19 @@ function unpackItem (
       const o = table.getObject(-raw)
       if (o == null) throw new RangeError(`Invalid packedId ${raw} at ${path}`)
       return o
+    }
 
-    case 's':
+    case 's': {
       if (typeof raw !== 'string') {
         throw new TypeError(`Expecting a shareId at ${path}`)
       }
       const s = sharedData[raw]
       if (s == null) throw new RangeError(`Invalid shareId '${raw}' at ${path}`)
       return s
+    }
 
     case 'u':
-      return void 0
+      return undefined
 
     case 'u8':
       if (typeof raw !== 'string') {
@@ -311,7 +316,7 @@ function unpackItem (
       }
       return base64.parse(raw)
 
-    default:
+    default: {
       if (typeof map !== 'object' || map === null) {
         throw new TypeError(`Invalid type information ${map} at ${path}`)
       }
@@ -338,5 +343,6 @@ function unpackItem (
           n in map ? unpackItem(table, map[n], raw[n], `${path}.${n}`) : raw[n]
       }
       return out
+    }
   }
 }

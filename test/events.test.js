@@ -16,8 +16,7 @@ describe('events', function () {
         bogus: number,
         error: Error,
         foo: number
-      }
-    > = new Bridgeable()
+      }> = new Bridgeable()
 
     // Simple calls:
     p.on('foo', x => log(`callback1: ${x}`))
