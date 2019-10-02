@@ -1,3 +1,4 @@
+/* global setTimeout */
 // @flow
 
 import type { BridgeOptions, SendMessage } from './bridge.js'
@@ -44,7 +45,7 @@ export class BridgeState implements ObjectTable {
   sendPending: boolean
   +sendMessage: SendMessage
 
-  constructor (opts: BridgeOptions) {
+  constructor(opts: BridgeOptions) {
     const { sendMessage, throttleMs = 0 } = opts
 
     // Objects:
@@ -72,7 +73,7 @@ export class BridgeState implements ObjectTable {
    * This also closes all proxies created by the bridge and rejects
    * all pending calls.
    */
-  close (error: Error) {
+  close(error: Error) {
     for (const callId in this.pendingCalls) {
       const call = this.pendingCalls[Number(callId)]
       call.reject(error)
@@ -86,7 +87,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Grabs an object by its proxy id.
    */
-  getObject (packedId: number): Object | void {
+  getObject(packedId: number): Object | void {
     return packedId < 0 ? this.proxies[-packedId] : this.objects[packedId]
   }
 
@@ -95,7 +96,7 @@ export class BridgeState implements ObjectTable {
    * The id is positive for objects created on this side of the bridge,
    * and negative for proxy objects reflecting things on the other side.
    */
-  getPackedId (o: Object): number | null {
+  getPackedId(o: Object): number | null {
     const magic = getInstanceMagic(o)
     if (magic.closed) return null
     if (magic.remoteId != null && this.proxies[magic.remoteId] != null) {
@@ -116,7 +117,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Marks an object as needing changes.
    */
-  markDirty (localId: number, name?: string) {
+  markDirty(localId: number, name?: string) {
     const cache = this.caches[localId]
     if (name != null && name in cache) cache[name] = dirtyValue
 
@@ -127,7 +128,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Marks an object as being deleted.
    */
-  emitClose (localId: number) {
+  emitClose(localId: number) {
     delete this.objects[localId]
     delete this.caches[localId]
     if (this.message.closed == null) this.message.closed = []
@@ -138,7 +139,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Attaches an object to this bridge, sending a creation message.
    */
-  emitCreate (create: CreateMessage, o: Object) {
+  emitCreate(create: CreateMessage, o: Object) {
     if (this.message.created == null) this.message.created = []
     this.message.created.push(create)
     // this.wakeup() not needed, since this is part of data packing.
@@ -147,7 +148,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Enqueues a proxy call message.
    */
-  emitCall (remoteId: number, name: string, args: mixed): Promise<mixed> {
+  emitCall(remoteId: number, name: string, args: mixed): Promise<mixed> {
     const callId = this.nextCallId++
     const message: CallMessage = {
       callId,
@@ -167,7 +168,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Enqueues an event message.
    */
-  emitEvent (localId: number, name: string, payload: mixed) {
+  emitEvent(localId: number, name: string, payload: mixed) {
     const message: EventMessage = {
       localId,
       name,
@@ -181,7 +182,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Enqueues a function return message.
    */
-  emitReturn (callId: number, fail: boolean, value: mixed) {
+  emitReturn(callId: number, fail: boolean, value: mixed) {
     const message: ReturnMessage = {
       callId,
       ...(fail ? packThrow(this, value) : packData(this, value))
@@ -195,7 +196,7 @@ export class BridgeState implements ObjectTable {
    * Handles an incoming message,
    * updating state and triggering side-effects as needed.
    */
-  handleMessage (message: Message) {
+  handleMessage(message: Message) {
     // ----------------------------------------
     // Phase 1: Get our proxies up to date.
     // ----------------------------------------
@@ -312,7 +313,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Sends the current message.
    */
-  sendNow () {
+  sendNow() {
     if (this.closed) return
 
     // Build change messages:
@@ -336,7 +337,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Something has changed, so prepare to send the pending message:
    */
-  wakeup () {
+  wakeup() {
     if (this.sendPending) return
 
     this.sendPending = true

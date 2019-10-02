@@ -33,26 +33,26 @@ export class Bridge {
   +_state: BridgeState
   +_rootPromise: Promise<Object>
 
-  constructor (opts: BridgeOptions) {
+  constructor(opts: BridgeOptions) {
     this._state = new BridgeState(opts)
     this._rootPromise = new Promise(resolve =>
       addListener(this._state, 'root', resolve)
     )
   }
 
-  handleMessage (message: Message): mixed {
+  handleMessage(message: Message): mixed {
     this._state.handleMessage(message)
   }
 
-  getRoot () {
+  getRoot() {
     return this._rootPromise
   }
 
-  sendRoot (root: Object) {
+  sendRoot(root: Object) {
     this._state.emitEvent(0, 'root', root)
   }
 
-  close (error: Error) {
+  close(error: Error) {
     this._state.close(error)
   }
 }
@@ -62,20 +62,20 @@ export class Bridge {
  * where you want to verify that your API works correctly over a bridge,
  * but don't want to actually spawn a separate process.
  */
-export function makeLocalBridge<T> (o: T, opts: LocalBridgeOptions = {}): T {
-  function nopClone (m: Object): Object {
+export function makeLocalBridge<T>(o: T, opts: LocalBridgeOptions = {}): T {
+  function nopClone(m: Object): Object {
     return m
   }
   const { cloneMessage = nopClone, throttleMs } = opts
 
   const serverState = new BridgeState({
-    sendMessage (message) {
+    sendMessage(message) {
       clientState.handleMessage(cloneMessage(message))
     },
     throttleMs
   })
   const clientState = new BridgeState({
-    sendMessage (message) {
+    sendMessage(message) {
       serverState.handleMessage(cloneMessage(message))
     },
     throttleMs

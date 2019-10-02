@@ -25,7 +25,7 @@ export const dirtyValue = {}
 /**
  * Subscribes to an event on a bridgeable object.
  */
-export function addListener (
+export function addListener(
   o: Object,
   name: string,
   f: Function
@@ -36,7 +36,7 @@ export function addListener (
   if (listeners[name] == null) listeners[name] = [f]
   else listeners[name].push(f)
 
-  return function unsubscribe () {
+  return function unsubscribe() {
     listeners[name] = listeners[name].filter(i => i !== f)
   }
 }
@@ -44,7 +44,7 @@ export function addListener (
 /**
  * Subscribes to property changes on a bridgeable object.
  */
-export function addWatcher (
+export function addWatcher(
   o: Object,
   name: string,
   f: Function
@@ -58,7 +58,7 @@ export function addWatcher (
   if (watchers[name] == null) watchers[name] = { data, fs: [f] }
   else watchers[name].fs.push(f)
 
-  return function unsubscribe () {
+  return function unsubscribe() {
     watchers[name].fs = watchers[name].fs.filter(i => i !== f)
   }
 }
@@ -68,14 +68,14 @@ export function addWatcher (
  * The remote client will completely forget about this object,
  * and accessing it will become an error.
  */
-export function close (o: Object): mixed {
+export function close(o: Object): mixed {
   const magic = getInstanceMagic(o)
 
   // Call local callbacks:
-  const listeners = magic.listeners['close']
+  const listeners = magic.listeners.close
   if (listeners != null) {
     for (const f of listeners) {
-      callCallback(o, f, void 0, true)
+      callCallback(o, f, undefined, true)
     }
   }
 
@@ -91,7 +91,7 @@ export function close (o: Object): mixed {
 /**
  * Emits an event on a bridgeable object.
  */
-export function emit (o: Object, name: string, payload: mixed): mixed {
+export function emit(o: Object, name: string, payload: mixed): mixed {
   const magic = getInstanceMagic(o)
   if (magic.closed) throw new Error('Cannot emit event on closed object')
 
@@ -112,7 +112,7 @@ export function emit (o: Object, name: string, payload: mixed): mixed {
 /**
  * Marks an object as having changes. The proxy server will send an update.
  */
-export function update<T: {}> (o: T, name?: $Keys<T>): mixed {
+export function update<T: {}>(o: T, name?: $Keys<T>): mixed {
   const magic = getInstanceMagic(o)
   if (magic.closed) throw new Error('Cannot update closed object')
 
@@ -141,7 +141,7 @@ export function update<T: {}> (o: T, name?: $Keys<T>): mixed {
 /**
  * Calls a user-supplied callback function with error checking.
  */
-export function callCallback (
+export function callCallback(
   o: Object,
   f: Function,
   payload: mixed,
@@ -152,7 +152,7 @@ export function callCallback (
 
     // If the function returns a promise, emit an error if it rejects:
     if (emitError && out != null && typeof out.then === 'function') {
-      out.then(void 0, e => emit(o, 'error', e))
+      out.then(undefined, e => emit(o, 'error', e))
     }
   } catch (e) {
     if (emitError) emit(o, 'error', e)

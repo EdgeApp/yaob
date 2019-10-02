@@ -1,6 +1,15 @@
-.idea
-.vscode
-/build
-/lib
-/node_modules
+# Build output:
+build/
+lib/
+
+# Package managers:
+*.tgz
+node_modules/
+npm-debug.log
 package-lock.json
+yarn-error.log
+
+# Editors:
+.DS_Store
+.idea/
+.vscode/

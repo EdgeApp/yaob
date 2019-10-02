@@ -70,7 +70,7 @@ export type PackedError = {
 /**
  * Prepares a value for sending over the wire.
  */
-export function packData (table: ObjectTable, data: mixed): PackedData {
+export function packData(table: ObjectTable, data: mixed): PackedData {
   try {
     const map = mapData(table, data)
     const raw = packItem(table, map, data)
@@ -83,7 +83,7 @@ export function packData (table: ObjectTable, data: mixed): PackedData {
 /**
  * Prepares a thrown value for sending over the wire.
  */
-export function packThrow (table: ObjectTable, data: mixed): PackedData {
+export function packThrow(table: ObjectTable, data: mixed): PackedData {
   const map = mapData(table, data)
   const raw = packItem(table, map, data)
   return { map, raw, throw: true }
@@ -92,7 +92,7 @@ export function packThrow (table: ObjectTable, data: mixed): PackedData {
 /**
  * Restores a value that has been sent over the wire.
  */
-export function unpackData (
+export function unpackData(
   table: ObjectTable,
   data: PackedData,
   path: string
@@ -107,14 +107,14 @@ export function unpackData (
  * Searches through a value, looking for data we can't send directly.
  * Returns a map showing where fixes need to take place.
  */
-function mapData (table: ObjectTable, data: mixed): DataMap {
+function mapData(table: ObjectTable, data: mixed): DataMap {
   switch (typeof data) {
     case 'boolean':
     case 'number':
     case 'string':
       return ''
 
-    case 'object':
+    case 'object': {
       if (data === null) return ''
       if (data instanceof Date) return 'd'
       if (data instanceof Error) return 'e'
@@ -147,6 +147,7 @@ function mapData (table: ObjectTable, data: mixed): DataMap {
         }
       }
       return out
+    }
 
     case 'undefined':
       return 'u'
@@ -164,7 +165,7 @@ function mapData (table: ObjectTable, data: mixed): DataMap {
 /**
  * Breaks down an error object into a JSON representation.
  */
-function packError (table: ObjectTable, o: Object): PackedError {
+function packError(table: ObjectTable, o: Object): PackedError {
   // Grab the properties off the object:
   const { message, stack } = o
   const props = { message, stack, ...o }
@@ -184,7 +185,7 @@ function packError (table: ObjectTable, o: Object): PackedError {
 /**
  * Copies a value, removing any API objects identified in the types.
  */
-function packItem (table: ObjectTable, map: DataMap, data: any): JsonValue {
+function packItem(table: ObjectTable, map: DataMap, data: any): JsonValue {
   switch (map) {
     case '':
       return data
@@ -210,7 +211,7 @@ function packItem (table: ObjectTable, map: DataMap, data: any): JsonValue {
     case 'u8':
       return base64.stringify(data)
 
-    default:
+    default: {
       // Arrays:
       if (Array.isArray(map)) {
         const out = []
@@ -226,13 +227,14 @@ function packItem (table: ObjectTable, map: DataMap, data: any): JsonValue {
         out[n] = n in map ? packItem(table, map[n], data[n]) : data[n]
       }
       return out
+    }
   }
 }
 
 /**
  * Restores an error object from its JSON representation.
  */
-function unpackError (
+function unpackError(
   table: ObjectTable,
   value: PackedError,
   path: string
@@ -260,7 +262,7 @@ function unpackError (
 /**
  * Restores a value that has been sent over the wire.
  */
-function unpackItem (
+function unpackItem(
   table: ObjectTable,
   map: DataMap,
   raw: any,
@@ -270,9 +272,10 @@ function unpackItem (
     case '':
       return raw
 
-    case '?':
+    case '?': {
       const type = typeof raw === 'string' ? raw : '?'
       throw new TypeError(`Unsupported value of type ${type} at ${path}`)
+    }
 
     case 'd':
       return new Date(raw)
@@ -283,7 +286,7 @@ function unpackItem (
       }
       return unpackError(table, raw, path)
 
-    case 'o':
+    case 'o': {
       if (raw === null) {
         throw new TypeError(`Closed bridge object at ${path}`)
       }
@@ -293,17 +296,19 @@ function unpackItem (
       const o = table.getObject(-raw)
       if (o == null) throw new RangeError(`Invalid packedId ${raw} at ${path}`)
       return o
+    }
 
-    case 's':
+    case 's': {
       if (typeof raw !== 'string') {
         throw new TypeError(`Expecting a shareId at ${path}`)
       }
       const s = sharedData[raw]
       if (s == null) throw new RangeError(`Invalid shareId '${raw}' at ${path}`)
       return s
+    }
 
     case 'u':
-      return void 0
+      return undefined
 
     case 'u8':
       if (typeof raw !== 'string') {
@@ -311,7 +316,7 @@ function unpackItem (
       }
       return base64.parse(raw)
 
-    default:
+    default: {
       if (typeof map !== 'object' || map === null) {
         throw new TypeError(`Invalid type information ${map} at ${path}`)
       }
@@ -338,5 +343,6 @@ function unpackItem (
           n in map ? unpackItem(table, map[n], raw[n], `${path}.${n}`) : raw[n]
       }
       return out
+    }
   }
 }

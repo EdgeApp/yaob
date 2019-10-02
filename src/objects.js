@@ -24,7 +24,7 @@ export const dirtyValue = {}
  * Examines a bridgeable object and prepares it for sending of the wire.
  * Returns a creation method an the initial value cache.
  */
-export function packObject (
+export function packObject(
   state: BridgeState,
   o: Object
 ): {
@@ -74,7 +74,7 @@ export function packObject (
  * Checks an object for changes.
  * Updates the cache, and returns an object with the necessary changes.
  */
-export function diffObject (
+export function diffObject(
   state: BridgeState,
   o: Object,
   cache: ValueCache
@@ -104,7 +104,7 @@ export function diffObject (
  * The object will have the same values and methods as the original,
  * but will send everything over the bridge.
  */
-export function makeProxy (state: BridgeState, create: CreateMessage): Object {
+export function makeProxy(state: BridgeState, create: CreateMessage): Object {
   const props = {}
 
   // Make the magic property descriptor:
@@ -128,7 +128,7 @@ export function makeProxy (state: BridgeState, create: CreateMessage): Object {
 /**
  * Unpacks a proxy's properties into the magic storage area.
  */
-export function updateObjectProps (
+export function updateObjectProps(
   state: BridgeState,
   o: Object,
   props: PackedProps
@@ -146,15 +146,15 @@ export function updateObjectProps (
   }
 }
 
-function makeProxyGetter (magic: ProxyMagic, name: string) {
-  return function get () {
+function makeProxyGetter(magic: ProxyMagic, name: string) {
+  return function get() {
     if (magic.errors[name]) throw magic.props[name]
     return magic.props[name]
   }
 }
 
-function makeProxyMethod (state: BridgeState, magic: ProxyMagic, name: string) {
-  return function method (...args) {
+function makeProxyMethod(state: BridgeState, magic: ProxyMagic, name: string) {
+  return function method(...args) {
     if (magic.closed) {
       return Promise.reject(
         new TypeError(`Cannot call method '${name}' of closed proxy`)

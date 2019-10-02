@@ -7,24 +7,24 @@ import { Bridgeable, update } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge } from './utils/utils.js'
 
-describe('updating', function () {
-  it('simple mutation', async function () {
+describe('updating', function() {
+  it('simple mutation', async function() {
     const log = makeAssertLog()
     class MutationApi extends Bridgeable<{ count: number }> {
       count: number
 
-      constructor () {
+      constructor() {
         super()
         this.count = 0
       }
 
-      increment (step: number) {
+      increment(step: number) {
         this.count = this.count + step
         update(this)
         return this.count
       }
 
-      incrementWithoutUpdate (step: number) {
+      incrementWithoutUpdate(step: number) {
         this.count = this.count + step
         return this.count
       }
@@ -55,29 +55,29 @@ describe('updating', function () {
     log.assert(['remote 6', 'server ~1', 'local 6'])
   })
 
-  it('deep mutation', async function () {
+  it('deep mutation', async function() {
     const log = makeAssertLog()
     class MutationApi extends Bridgeable<{ list: Array<number> }> {
       list: Array<number>
 
-      constructor () {
+      constructor() {
         super()
         this.list = []
       }
 
-      push (item: number) {
+      push(item: number) {
         this.list.push(item)
         update(this, 'list')
         return this.list
       }
 
-      pushWithGeneralUpdate (item: number) {
+      pushWithGeneralUpdate(item: number) {
         this.list.push(item)
         update(this)
         return this.list
       }
 
-      pushWithoutUpdate (item: number) {
+      pushWithoutUpdate(item: number) {
         this.list.push(item)
         return this.list
       }
@@ -113,7 +113,7 @@ describe('updating', function () {
     log.assert(['remote 4', 'server ~1', 'local 4'])
   })
 
-  it('before closing', async function () {
+  it('before closing', async function() {
     const log = makeAssertLog()
     class MutationApi extends Bridgeable<{
       count: number,
@@ -122,13 +122,13 @@ describe('updating', function () {
       count: number
       list: Array<number>
 
-      constructor () {
+      constructor() {
         super()
         this.count = 0
         this.list = []
       }
 
-      close () {
+      close() {
         this.count += 1
         this.list.push(this.count)
         this._update('list')

@@ -8,15 +8,15 @@ import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
 
 class ChildApi extends Bridgeable<ChildApi, { close: void }> {
-  get answer () {
+  get answer() {
     return 42
   }
 
-  async asyncMethod (x: number) {
+  async asyncMethod(x: number) {
     return x * 3
   }
 
-  syncMethod (x: number) {
+  syncMethod(x: number) {
     return x * 2
   }
 }
@@ -26,16 +26,16 @@ shareData({
 })
 
 class ParentApi extends Bridgeable<> {
-  async makeChild () {
+  async makeChild() {
     return new ChildApi()
   }
 
-  async closeChild (child: ChildApi) {
+  async closeChild(child: ChildApi) {
     close(child)
   }
 }
 
-function checkDestruction (child: ChildApi): Promise<mixed> {
+function checkDestruction(child: ChildApi): Promise<mixed> {
   // Client-side methods & properties work:
   expect(child.syncMethod(1.5)).equals(3)
   expect(child.answer).equals(42)
@@ -47,8 +47,8 @@ function checkDestruction (child: ChildApi): Promise<mixed> {
   )
 }
 
-describe('closing', function () {
-  it('remote closure', async function () {
+describe('closing', function() {
+  it('remote closure', async function() {
     const log = makeAssertLog()
     const remote = new ParentApi()
     const local = await makeLoggedBridge(log, remote)
@@ -66,7 +66,7 @@ describe('closing', function () {
     log.assert(['client c1', 'server -1 r1', 'on close'])
   })
 
-  it('client-side closure', async function () {
+  it('client-side closure', async function() {
     const log = makeAssertLog()
     const remote = new ParentApi()
     const local = await makeLoggedBridge(log, remote)
@@ -88,7 +88,7 @@ describe('closing', function () {
     log.assert(['client c1', 'server r1'])
   })
 
-  it('server closure', async function () {
+  it('server closure', async function() {
     const log = makeAssertLog()
     const remote = new ChildApi()
     const local = await makeLoggedBridge(log, remote)
@@ -103,10 +103,10 @@ describe('closing', function () {
     log.assert(['remote on close', 'server -1', 'local on close'])
   })
 
-  it('bridge closure', async function () {
+  it('bridge closure', async function() {
     const log = makeAssertLog()
     const bridge = new Bridge({
-      sendMessage () {
+      sendMessage() {
         log('send')
       }
     })
