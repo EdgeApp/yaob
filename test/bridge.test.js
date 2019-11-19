@@ -3,6 +3,7 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
+import type { Subscriber } from '../src/index.js'
 import {
   Bridgeable,
   bridgifyClass,
@@ -11,7 +12,6 @@ import {
   makeLocalBridge,
   onMethod
 } from '../src/index.js'
-import type { Subscriber } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
 import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
 

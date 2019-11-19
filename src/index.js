@@ -1,11 +1,11 @@
 // @flow
 
-import { Bridge, makeLocalBridge } from './bridge.js'
 import type {
   BridgeOptions,
   LocalBridgeOptions,
   SendMessage
 } from './bridge.js'
+import { Bridge, makeLocalBridge } from './bridge.js'
 import { Bridgeable, onMethod, watchMethod } from './bridgeable.js'
 import { bridgifyClass, bridgifyObject, shareData } from './magic.js'
 import {

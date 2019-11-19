@@ -7,9 +7,9 @@
 
 import { packData, packThrow, unpackData } from './data.js'
 import {
-  MAGIC_KEY,
   type ProxyMagic,
   getInstanceMagic,
+  MAGIC_KEY,
   makeProxyMagic
 } from './magic.js'
 import type { CreateMessage, PackedProps } from './protocol.js'
