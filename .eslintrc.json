@@ -1,8 +1,16 @@
 {
-  "extends": ["standard-kit/lint", "standard-kit/lint/flow"],
-  "plugins": ["prettier"],
+  "extends": [
+    "standard-kit/prettier",
+    "standard-kit/prettier/flow",
+    "standard-kit/prettier/typescript"
+  ],
+  "parserOptions": {
+    "project": "tsconfig.json"
+  },
+  "plugins": [
+    "simple-import-sort"
+  ],
   "rules": {
-    "no-var": "error",
-    "prettier/prettier": "error"
+    "simple-import-sort/sort": "error"
   }
 }
