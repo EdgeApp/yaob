@@ -17,6 +17,7 @@
   ],
   "main": "lib/yaob.cjs.js",
   "module": "lib/yaob.js",
+  "types": "src/index.d.ts",
   "scripts": {
     "build": "rimraf lib && rollup -c",
     "build:test": "rollup -c test/rollup.config.js",
