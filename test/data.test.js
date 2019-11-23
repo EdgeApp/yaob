@@ -63,11 +63,17 @@ describe('packData', function() {
 
       // Objects:
       [{ x: 1, y: 2 }, { raw: { x: 1, y: 2 } }],
-      [{ x: 1, y: undefined }, { map: { y: 'u' }, raw: { x: 1, y: null } }],
+      [
+        { x: 1, y: undefined },
+        { map: { y: 'u' }, raw: { x: 1, y: null } }
+      ],
 
       // Invalid types:
       [() => {}, { map: '?', raw: 'function' }],
-      [{ x: 1, y() {} }, { map: { y: '?' }, raw: { x: 1, y: 'function' } }]
+      [
+        { x: 1, y() {} },
+        { map: { y: '?' }, raw: { x: 1, y: 'function' } }
+      ]
     ]
 
     for (const [data, packed] of cases) {
@@ -168,7 +174,10 @@ describe('unpackData', function() {
 
       // Objects:
       [{ x: 1, y: 2 }, { raw: { x: 1, y: 2 } }],
-      [{ x: 1, y: undefined }, { map: { y: 'u' }, raw: { x: 1, y: null } }]
+      [
+        { x: 1, y: undefined },
+        { map: { y: 'u' }, raw: { x: 1, y: null } }
+      ]
     ]
 
     for (const [data, packed] of cases) {

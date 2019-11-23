@@ -31,7 +31,7 @@ export function makeAssertLog(opts: AssertLogOptions = {}): AssertLog {
   const { ignoreOrder = false, verbose = false } = opts
   let events: Array<string> = []
 
-  const out: any = function log() {
+  const out: any = function log(): void {
     let event = ''
     for (let i = 0; i < arguments.length; ++i) {
       const arg = arguments[i]
@@ -43,14 +43,14 @@ export function makeAssertLog(opts: AssertLogOptions = {}): AssertLog {
     events.push(event)
   }
 
-  out.assert = function assert(expected: Array<string>) {
+  out.assert = function assert(expected: Array<string>): void {
     ignoreOrder
       ? expect(events.sort()).to.deep.equal(expected.sort())
       : expect(events).to.deep.equal(expected)
     events = []
   }
 
-  out.clear = function clear() {
+  out.clear = function clear(): void {
     events = []
   }
 

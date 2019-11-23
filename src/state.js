@@ -117,7 +117,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Marks an object as needing changes.
    */
-  markDirty(localId: number, name?: string) {
+  markDirty(localId: number, name?: string): void {
     const cache = this.caches[localId]
     if (name != null && name in cache) cache[name] = dirtyValue
 
@@ -128,7 +128,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Marks an object as being deleted.
    */
-  emitClose(localId: number) {
+  emitClose(localId: number): void {
     delete this.objects[localId]
     delete this.caches[localId]
     if (this.message.closed == null) this.message.closed = []
@@ -139,7 +139,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Attaches an object to this bridge, sending a creation message.
    */
-  emitCreate(create: CreateMessage, o: Object) {
+  emitCreate(create: CreateMessage, o: Object): void {
     if (this.message.created == null) this.message.created = []
     this.message.created.push(create)
     // this.wakeup() not needed, since this is part of data packing.
@@ -168,7 +168,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Enqueues an event message.
    */
-  emitEvent(localId: number, name: string, payload: mixed) {
+  emitEvent(localId: number, name: string, payload: mixed): void {
     const message: EventMessage = {
       localId,
       name,
@@ -182,7 +182,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Enqueues a function return message.
    */
-  emitReturn(callId: number, fail: boolean, value: mixed) {
+  emitReturn(callId: number, fail: boolean, value: mixed): void {
     const message: ReturnMessage = {
       callId,
       ...(fail ? packThrow(this, value) : packData(this, value))
@@ -196,7 +196,7 @@ export class BridgeState implements ObjectTable {
    * Handles an incoming message,
    * updating state and triggering side-effects as needed.
    */
-  handleMessage(message: Message) {
+  handleMessage(message: Message): void {
     // ----------------------------------------
     // Phase 1: Get our proxies up to date.
     // ----------------------------------------
@@ -313,7 +313,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Sends the current message.
    */
-  sendNow() {
+  sendNow(): void {
     if (this.closed) return
 
     // Build change messages:
@@ -337,7 +337,7 @@ export class BridgeState implements ObjectTable {
   /**
    * Something has changed, so prepare to send the pending message:
    */
-  wakeup() {
+  wakeup(): void {
     if (this.sendPending) return
 
     this.sendPending = true
