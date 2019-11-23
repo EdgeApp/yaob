@@ -153,6 +153,7 @@ function mapData(table: ObjectTable, data: mixed): DataMap {
       return 'u'
 
     case 'function':
+      // $FlowFixMe - MAGIC_KEY isn't a known property here
       return data[MAGIC_KEY] != null && data[MAGIC_KEY].shareId != null
         ? 's'
         : '?'
