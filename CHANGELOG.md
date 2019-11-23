@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.3.5 (2019-11-23)
+
+- Add TypeScript type definitions.
+- Increase Flow support to version 0.105.
 
 ## 0.3.4 (2019-05-06)
 
