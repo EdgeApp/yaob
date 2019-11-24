@@ -23,7 +23,7 @@
     "build:test": "rollup -c test/rollup.config.js",
     "fix": "npm run lint -- --fix",
     "flow": "flow",
-    "lint": "eslint --ignore-path .gitignore .",
+    "lint": "eslint --ext .js,.ts .",
     "precommit": "lint-staged && flow && npm test && npm run build",
     "prepare": "npm run build",
     "pretest": "npm run build:test",
@@ -35,7 +35,7 @@
     }
   },
   "lint-staged": {
-    "*.js": "eslint"
+    "*.{js,ts}": "eslint"
   },
   "dependencies": {
     "rfc4648": "^1.1.0"

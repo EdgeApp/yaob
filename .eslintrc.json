@@ -11,6 +11,7 @@
     "simple-import-sort"
   ],
   "rules": {
+    "no-var": "error",
     "simple-import-sort/sort": "error"
   }
 }
