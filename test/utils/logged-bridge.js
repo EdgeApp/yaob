@@ -1,17 +1,14 @@
-/* global setTimeout */
 // @flow
 
-import { Bridge } from '../../src/index.js'
+import { AssertLog } from 'assert-log'
 
-export function delay(ms: number): Promise<mixed> {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
+import { Bridge } from '../../src/index.js'
 
 /**
  * Creates a local client / server bridge with logging.
  */
 export function makeLoggedBridge<T: Object>(
-  log: (message: string) => mixed,
+  log: AssertLog,
   root: T
 ): Promise<T> {
   function describeMessage(message): string {
