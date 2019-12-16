@@ -5,7 +5,8 @@ import { describe, it } from 'mocha'
 
 import { Bridge, Bridgeable, close, shareData } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
-import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
+import { expectRejection } from './utils/expect-rejection.js'
+import { delay, makeLoggedBridge } from './utils/utils.js'
 
 class ChildApi extends Bridgeable<ChildApi, { close: void }> {
   get answer() {
@@ -41,7 +42,7 @@ function checkDestruction(child: ChildApi): Promise<mixed> {
   expect(child.answer).equals(42)
 
   // Remote method call fails:
-  return promiseFail(
+  return expectRejection(
     child.asyncMethod(1.5),
     "TypeError: Cannot call method 'asyncMethod' of closed proxy"
   )
@@ -81,7 +82,7 @@ describe('closing', function() {
     log.assert(['on close'])
 
     // Cannot send deleted proxies over the bridge:
-    await promiseFail(
+    await expectRejection(
       local.closeChild(child),
       'TypeError: Closed bridge object at closeChild.arguments[0]'
     )

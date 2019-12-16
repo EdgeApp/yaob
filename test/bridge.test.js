@@ -13,7 +13,8 @@ import {
   onMethod
 } from '../src/index.js'
 import { makeAssertLog } from './utils/assert-log.js'
-import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
+import { expectRejection } from './utils/expect-rejection.js'
+import { delay, makeLoggedBridge } from './utils/utils.js'
 
 describe('bridging', function() {
   it('maintains object identity', async function() {
@@ -91,7 +92,7 @@ describe('bridging', function() {
     expect(await local.simple(21)).equals(42)
     log.assert(['client c1', 'server r1'])
 
-    await promiseFail(local.throws(), 'Error: I will never be happy')
+    await expectRejection(local.throws(), 'Error: I will never be happy')
     log.assert(['client c1', 'server r1'])
   })
 

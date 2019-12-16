@@ -1,22 +1,10 @@
 /* global setTimeout */
 // @flow
 
-import { expect } from 'chai'
-
 import { Bridge } from '../../src/index.js'
 
 export function delay(ms: number): Promise<mixed> {
   return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-export function promiseFail(
-  promise: Promise<mixed>,
-  text: string
-): Promise<mixed> {
-  return promise.then(
-    ok => Promise.reject(new Error('Should fail')),
-    e => expect(e.toString()).equals(text)
-  )
 }
 
 /**
