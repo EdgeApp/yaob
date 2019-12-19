@@ -47,6 +47,7 @@
     "@babel/preset-flow": "^7.0.0",
     "@typescript-eslint/eslint-plugin": ">=2.0.0",
     "@typescript-eslint/parser": "^2.0.0",
+    "assert-log": "^0.2.1",
     "babel-eslint": ">=10.0.0",
     "chai": "^4.1.2",
     "eslint": ">=6.2.2",

@@ -1,11 +1,12 @@
 // @flow
 
+import { makeAssertLog } from 'assert-log'
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
 import { Bridge, Bridgeable, close, shareData } from '../src/index.js'
-import { makeAssertLog } from './utils/assert-log.js'
-import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
+import { expectRejection } from './utils/expect-rejection.js'
+import { makeLoggedBridge } from './utils/logged-bridge.js'
 
 class ChildApi extends Bridgeable<ChildApi, { close: void }> {
   get answer() {
@@ -41,7 +42,7 @@ function checkDestruction(child: ChildApi): Promise<mixed> {
   expect(child.answer).equals(42)
 
   // Remote method call fails:
-  return promiseFail(
+  return expectRejection(
     child.asyncMethod(1.5),
     "TypeError: Cannot call method 'asyncMethod' of closed proxy"
   )
@@ -54,16 +55,16 @@ describe('closing', function() {
     const local = await makeLoggedBridge(log, remote)
     const child = await local.makeChild()
     child.on('close', () => log('on close'))
-    log.assert(['server +1 e1', 'client c1', 'server +1 r1'])
+    log.assert('server +1 e1', 'client c1', 'server +1 r1')
 
     // We can call child methods:
     expect(await child.asyncMethod(1.5)).equals(4.5)
-    log.assert(['client c1', 'server r1'])
+    log.assert('client c1', 'server r1')
 
     // Ask the server to close the child:
     await local.closeChild(child)
     await checkDestruction(child)
-    log.assert(['client c1', 'server -1 r1', 'on close'])
+    log.assert('client c1', 'server -1 r1', 'on close')
   })
 
   it('client-side closure', async function() {
@@ -72,20 +73,19 @@ describe('closing', function() {
     const local = await makeLoggedBridge(log, remote)
     const child = await local.makeChild()
     child.on('close', () => log('on close'))
-    log.assert(['server +1 e1', 'client c1', 'server +1 r1'])
+    log.assert('server +1 e1', 'client c1', 'server +1 r1')
 
     // Deleting local proxies disables property access:
     close(child)
+    log.assert('on close')
     await checkDestruction(child)
-    await delay(10)
-    log.assert(['on close'])
 
     // Cannot send deleted proxies over the bridge:
-    await promiseFail(
+    await expectRejection(
       local.closeChild(child),
       'TypeError: Closed bridge object at closeChild.arguments[0]'
     )
-    log.assert(['client c1', 'server r1'])
+    log.assert('client c1', 'server r1')
   })
 
   it('server closure', async function() {
@@ -94,17 +94,17 @@ describe('closing', function() {
     const local = await makeLoggedBridge(log, remote)
     remote.on('close', () => log('remote on close'))
     local.on('close', () => log('local on close'))
-    log.assert(['server +1 e1'])
+    log.assert('server +1 e1')
 
     // The server closes the object on its own initiative:
     close(remote)
-    await delay(10)
+    log.assert('remote on close')
+    await log.waitFor(2).assert('server -1', 'local on close')
     await checkDestruction(local)
-    log.assert(['remote on close', 'server -1', 'local on close'])
   })
 
   it('bridge closure', async function() {
-    const log = makeAssertLog()
+    const log = makeAssertLog({ timeout: 10 })
     const bridge = new Bridge({
       sendMessage() {
         log('send')
@@ -112,12 +112,10 @@ describe('closing', function() {
     })
 
     bridge.sendRoot({ prop: 'prop' })
+    await log.waitFor(1).assert('send')
 
-    await delay(10)
     bridge.close(new Error('The bridge went away'))
     bridge.sendRoot({ prop: 'prop' })
-
-    await delay(10)
-    log.assert(['send'])
+    await log.waitFor(1).assert()
   })
 })

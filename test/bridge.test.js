@@ -1,5 +1,6 @@
 // @flow
 
+import { makeAssertLog } from 'assert-log'
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
 
@@ -12,8 +13,8 @@ import {
   makeLocalBridge,
   onMethod
 } from '../src/index.js'
-import { makeAssertLog } from './utils/assert-log.js'
-import { delay, makeLoggedBridge, promiseFail } from './utils/utils.js'
+import { expectRejection } from './utils/expect-rejection.js'
+import { makeLoggedBridge } from './utils/logged-bridge.js'
 
 describe('bridging', function() {
   it('maintains object identity', async function() {
@@ -29,7 +30,7 @@ describe('bridging', function() {
 
     const remote = new ParentApi()
     const local = await makeLoggedBridge(log, remote)
-    log.assert(['server +2 e1'])
+    log.assert('server +2 e1')
 
     // The two children are the same object on the client side:
     expect(local.children.length).equals(2)
@@ -46,7 +47,7 @@ describe('bridging', function() {
 
     const remote = new LoopyApi()
     const local = await makeLoggedBridge(log, remote)
-    log.assert(['server +1 e1'])
+    log.assert('server +1 e1')
 
     expect(local.self).equals(local)
   })
@@ -86,13 +87,13 @@ describe('bridging', function() {
 
     const remote = new MethodApi()
     const local = await makeLoggedBridge(log, remote)
-    log.assert(['server +1 e1'])
+    log.assert('server +1 e1')
 
     expect(await local.simple(21)).equals(42)
-    log.assert(['client c1', 'server r1'])
+    log.assert('client c1', 'server r1')
 
-    await promiseFail(local.throws(), 'Error: I will never be happy')
-    log.assert(['client c1', 'server r1'])
+    await expectRejection(local.throws(), 'Error: I will never be happy')
+    log.assert('client c1', 'server r1')
   })
 
   it('getter throws', function() {
@@ -143,8 +144,7 @@ describe('bridging', function() {
     local.on('event', x => log('got event', x))
 
     emit(remote, 'event', 1)
-    await delay(10)
-    log.assert(['got event 1'])
+    await log.waitFor(1).assert('got event 1')
   })
 
   it('bridges proxies', async function() {
@@ -171,10 +171,13 @@ describe('bridging', function() {
     local.on('event', x => log('got event', x))
     local.watch('flag', x => log('got flag', x))
 
-    // Quickly try the basics:
+    // Try an event:
     remote._emit('event', 1)
+    await log.waitFor(1).assert('got event 1')
+
+    // Try a method:
     expect(await local.foo()).equals('bar')
+    log.assert('got flag true')
     expect(local.flag).equals(true)
-    log.assert(['got event 1', 'got flag true'])
   })
 })
