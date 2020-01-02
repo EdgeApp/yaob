@@ -49,13 +49,13 @@ export type Subscriber<Events extends {} = {}> = <Name extends keyof Events>(
  * The `on` function,
  * but packaged as a method and ready to be placed on an object.
  */
-export declare const onMethod: Function
+export declare function onMethod(name: string, f: Function): CallbackRemover
 
 /**
  * The `watch` function,
  * but packaged as a method and ready to be placed on an object.
  */
-export declare const watchMethod: Function
+export declare function watchMethod(name: string, f: Function): CallbackRemover
 
 /**
  * The base class for all bridgeable API's. Provides callback capability.
@@ -71,10 +71,7 @@ export declare class Bridgeable<Props extends {} = {}, Events extends {} = {}> {
 
 export declare function bridgifyClass<Type extends Function>(Class: Type): Type
 export declare function bridgifyObject<Type extends object>(o: Type): Type
-export declare function shareData(
-  table: { [name: string]: object },
-  namespace?: string
-): void
+export declare function shareData(table: object, namespace?: string): void
 
 export declare function close(o: object): unknown
 export declare function emit(o: object, name: string, payload: unknown): unknown
