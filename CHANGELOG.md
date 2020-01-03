@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.6 (2020-01-02)
+
+- Add TypeScript type definitions.
+- Add `ArrayBuffer` support.
+
 ## 0.3.5 (2019-11-23)
 
 - Add TypeScript type definitions.
