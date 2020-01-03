@@ -34,6 +34,7 @@ export type DataMap =
   | 'o' // Object
   | 's' // Shared data
   | 'u' // Undefined
+  | 'ab' // ArrayBuffer
   | 'u8' // Uint8Array
 
 /**
@@ -118,6 +119,7 @@ function mapData(table: ObjectTable, data: mixed): DataMap {
       if (data === null) return ''
       if (data instanceof Date) return 'd'
       if (data instanceof Error) return 'e'
+      if (data instanceof ArrayBuffer) return 'ab'
       if (data instanceof Uint8Array) return 'u8'
       if (data[MAGIC_KEY] != null) {
         return data[MAGIC_KEY].shareId != null ? 's' : 'o'
@@ -208,6 +210,9 @@ function packItem(table: ObjectTable, map: DataMap, data: any): JsonValue {
 
     case 'u':
       return null
+
+    case 'ab':
+      return base64.stringify(new Uint8Array(data))
 
     case 'u8':
       return base64.stringify(data)
@@ -310,6 +315,12 @@ function unpackItem(
 
     case 'u':
       return undefined
+
+    case 'ab':
+      if (typeof raw !== 'string') {
+        throw new TypeError(`Expecting a base64 string at ${path}`)
+      }
+      return base64.parse(raw).buffer
 
     case 'u8':
       if (typeof raw !== 'string') {
