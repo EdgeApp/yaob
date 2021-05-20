@@ -9,7 +9,7 @@ import { getInstanceMagic } from './magic.js'
 /**
  * Undoes the effect of `on`.
  */
-export type CallbackRemover = () => mixed
+export type CallbackRemover = () => void
 
 /**
  * Signature of the `on` method.
@@ -68,7 +68,7 @@ export function addWatcher(
  * The remote client will completely forget about this object,
  * and accessing it will become an error.
  */
-export function close(o: Object): mixed {
+export function close(o: Object): void {
   const magic = getInstanceMagic(o)
 
   // Call local callbacks:
@@ -91,7 +91,7 @@ export function close(o: Object): mixed {
 /**
  * Emits an event on a bridgeable object.
  */
-export function emit(o: Object, name: string, payload: mixed): mixed {
+export function emit(o: Object, name: string, payload: mixed): void {
   const magic = getInstanceMagic(o)
   if (magic.closed) throw new Error('Cannot emit event on closed object')
 
@@ -112,7 +112,7 @@ export function emit(o: Object, name: string, payload: mixed): mixed {
 /**
  * Marks an object as having changes. The proxy server will send an update.
  */
-export function update<T: {}>(o: T, name?: $Keys<T>): mixed {
+export function update<T: {}>(o: T, name?: $Keys<T>): void {
   const magic = getInstanceMagic(o)
   if (magic.closed) throw new Error('Cannot update closed object')
 
