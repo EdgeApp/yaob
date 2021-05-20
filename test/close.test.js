@@ -48,8 +48,8 @@ function checkDestruction(child: ChildApi): Promise<mixed> {
   )
 }
 
-describe('closing', function() {
-  it('remote closure', async function() {
+describe('closing', function () {
+  it('remote closure', async function () {
     const log = makeAssertLog()
     const remote = new ParentApi()
     const local = await makeLoggedBridge(log, remote)
@@ -67,7 +67,7 @@ describe('closing', function() {
     log.assert('client c1', 'server -1 r1', 'on close')
   })
 
-  it('client-side closure', async function() {
+  it('client-side closure', async function () {
     const log = makeAssertLog()
     const remote = new ParentApi()
     const local = await makeLoggedBridge(log, remote)
@@ -88,7 +88,7 @@ describe('closing', function() {
     log.assert('client c1', 'server r1')
   })
 
-  it('server closure', async function() {
+  it('server closure', async function () {
     const log = makeAssertLog()
     const remote = new ChildApi()
     const local = await makeLoggedBridge(log, remote)
@@ -103,7 +103,7 @@ describe('closing', function() {
     await checkDestruction(local)
   })
 
-  it('bridge closure', async function() {
+  it('bridge closure', async function () {
     const log = makeAssertLog({ timeout: 10 })
     const bridge = new Bridge({
       sendMessage() {
