@@ -45,7 +45,7 @@ export function packObject(
   // Iterate over the object's properties and add their names to
   // the method list or the value cache.
   const cache: ValueCache = {}
-  const methods: Array<string> = []
+  const methods: string[] = []
   const props: PackedProps = {}
   for (const n in allNames) {
     try {

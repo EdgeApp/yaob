@@ -6,8 +6,8 @@ import { describe, it } from 'mocha'
 import { Bridgeable, emit } from '../src/index.js'
 import { makeLoggedBridge } from './utils/logged-bridge.js'
 
-describe('events', function() {
-  it('work locally', function() {
+describe('events', function () {
+  it('work locally', function () {
     const log = makeAssertLog({ sort: true })
     const p: Bridgeable<
       {},
@@ -43,7 +43,7 @@ describe('events', function() {
     log.assert('Error: blew up')
   })
 
-  it('work over a bridge', async function() {
+  it('work over a bridge', async function () {
     const log = makeAssertLog()
     class EventApi extends Bridgeable<
       {},

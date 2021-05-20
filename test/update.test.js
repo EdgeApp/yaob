@@ -7,8 +7,8 @@ import { describe, it } from 'mocha'
 import { Bridgeable, update } from '../src/index.js'
 import { makeLoggedBridge } from './utils/logged-bridge.js'
 
-describe('updating', function() {
-  it('simple mutation', async function() {
+describe('updating', function () {
+  it('simple mutation', async function () {
     const log = makeAssertLog()
     class MutationApi extends Bridgeable<{ count: number }> {
       count: number
@@ -55,29 +55,29 @@ describe('updating', function() {
     expect(local.count).equals(6)
   })
 
-  it('deep mutation', async function() {
+  it('deep mutation', async function () {
     const log = makeAssertLog()
-    class MutationApi extends Bridgeable<{ list: Array<number> }> {
-      list: Array<number>
+    class MutationApi extends Bridgeable<{ list: number[] }> {
+      list: number[]
 
       constructor() {
         super()
         this.list = []
       }
 
-      push(item: number): Array<number> {
+      push(item: number): number[] {
         this.list.push(item)
         update(this, 'list')
         return this.list
       }
 
-      pushWithGeneralUpdate(item: number): Array<number> {
+      pushWithGeneralUpdate(item: number): number[] {
         this.list.push(item)
         update(this)
         return this.list
       }
 
-      pushWithoutUpdate(item: number): Array<number> {
+      pushWithoutUpdate(item: number): number[] {
         this.list.push(item)
         return this.list
       }
@@ -113,14 +113,14 @@ describe('updating', function() {
     expect(local.list).deep.equals([1, 2, 4, 8])
   })
 
-  it('before closing', async function() {
+  it('before closing', async function () {
     const log = makeAssertLog()
     class MutationApi extends Bridgeable<{
       count: number,
-      list: Array<number>
+      list: number[]
     }> {
       count: number
-      list: Array<number>
+      list: number[]
 
       constructor() {
         super()

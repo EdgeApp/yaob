@@ -26,7 +26,7 @@ export interface ObjectTable {
  */
 export type DataMap =
   | { +[name: string]: DataMap }
-  | Array<DataMap>
+  | DataMap[]
   | '' // No change
   | '?' // Invalid value
   | 'd' // Date
@@ -42,7 +42,7 @@ export type DataMap =
  */
 export type JsonValue =
   | { +[name: string]: JsonValue }
-  | Array<JsonValue>
+  | JsonValue[]
   | false
   | null
   | number
@@ -127,7 +127,7 @@ function mapData(table: ObjectTable, data: mixed): DataMap {
 
       // Arrays:
       if (Array.isArray(data)) {
-        let out: Array<DataMap> | '' = ''
+        let out: DataMap[] | '' = ''
         for (let i = 0; i < data.length; ++i) {
           const map = mapData(table, data[i])
           if (map !== '' && out === '') {

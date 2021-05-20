@@ -15,8 +15,8 @@ import { MAGIC_KEY } from '../src/magic.js'
  * An simplified object table for testing.
  */
 class MockTable implements ObjectTable {
-  objects: Array<Object>
-  proxies: Array<Object>
+  objects: Object[]
+  proxies: Object[]
 
   constructor() {
     this.objects = []
@@ -38,8 +38,8 @@ class MockTable implements ObjectTable {
 
 const emptyTable = new MockTable()
 
-describe('packData', function() {
-  it('handles simple types', function() {
+describe('packData', function () {
+  it('handles simple types', function () {
     const sparseArray = []
     sparseArray[2] = 2
     const u8array = Uint8Array.from([1, 2, 3, 4])
@@ -83,7 +83,7 @@ describe('packData', function() {
     }
   })
 
-  it('handles error types', function() {
+  it('handles error types', function () {
     // Builtin errors:
     const error = new Error('e')
     const typeError = new TypeError('type')
@@ -133,7 +133,7 @@ describe('packData', function() {
     }
   })
 
-  it('handles bridgeable objects', function() {
+  it('handles bridgeable objects', function () {
     const o1 = {}
     const o2 = {}
     const o3 = {}
@@ -154,8 +154,8 @@ describe('packData', function() {
   })
 })
 
-describe('unpackData', function() {
-  it('restores simple types', function() {
+describe('unpackData', function () {
+  it('restores simple types', function () {
     const u8array = Uint8Array.from([1, 2, 3, 4])
     const arrayBuffer = u8array.buffer
 
@@ -189,7 +189,7 @@ describe('unpackData', function() {
     }
   })
 
-  it('throws for invalid types', function() {
+  it('throws for invalid types', function () {
     const cases: Array<[PackedData, string]> = [
       [
         { map: '?', raw: 'function' },
@@ -231,7 +231,7 @@ describe('unpackData', function() {
     }
   })
 
-  it('restores Error payload', function() {
+  it('restores Error payload', function () {
     const stack = new Error().stack
     const packed = {
       map: 'e',
@@ -254,7 +254,7 @@ describe('unpackData', function() {
     expect(e.name).equals('PayloadError')
   })
 
-  it('restores TypeError', function() {
+  it('restores TypeError', function () {
     const stack = new TypeError().stack
     const packed = {
       map: 'e',
@@ -270,7 +270,7 @@ describe('unpackData', function() {
     expect(e.name).equals('TypeError')
   })
 
-  it('restores proxy types', function() {
+  it('restores proxy types', function () {
     const table = new MockTable()
 
     const o1 = {}

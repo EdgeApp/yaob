@@ -29,7 +29,7 @@ export type ChangeMessage = {
  */
 export type CreateMessage = {
   localId: number,
-  methods: Array<string>,
+  methods: string[],
   props: PackedProps
 }
 
@@ -53,10 +53,10 @@ export type ReturnMessage = {
  * It can include the various event types described above.
  */
 export type Message = {
-  calls?: Array<CallMessage>,
-  changed?: Array<ChangeMessage>,
-  closed?: Array<number>,
-  created?: Array<CreateMessage>,
-  events?: Array<EventMessage>,
-  returns?: Array<ReturnMessage>
+  calls?: CallMessage[],
+  changed?: ChangeMessage[],
+  closed?: number[],
+  created?: CreateMessage[],
+  events?: EventMessage[],
+  returns?: ReturnMessage[]
 }

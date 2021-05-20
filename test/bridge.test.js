@@ -16,8 +16,8 @@ import {
 import { expectRejection } from './utils/expect-rejection.js'
 import { makeLoggedBridge } from './utils/logged-bridge.js'
 
-describe('bridging', function() {
-  it('maintains object identity', async function() {
+describe('bridging', function () {
+  it('maintains object identity', async function () {
     const log = makeAssertLog()
     class ChildApi extends Bridgeable<> {}
     const remoteChild = new ChildApi()
@@ -37,7 +37,7 @@ describe('bridging', function() {
     expect(local.children[0]).equals(local.children[1])
   })
 
-  it('handles recursive objects', async function() {
+  it('handles recursive objects', async function () {
     const log = makeAssertLog()
     class LoopyApi extends Bridgeable<> {
       get self() {
@@ -52,7 +52,7 @@ describe('bridging', function() {
     expect(local.self).equals(local)
   })
 
-  it('filters private members', async function() {
+  it('filters private members', async function () {
     class SomeClass extends Bridgeable<> {
       prop: number
       _prop: number
@@ -73,7 +73,7 @@ describe('bridging', function() {
     expect(local).to.not.have.property('_prop')
   })
 
-  it('calls methods', async function() {
+  it('calls methods', async function () {
     const log = makeAssertLog()
     class MethodApi extends Bridgeable<> {
       simple(x: number) {
@@ -96,7 +96,7 @@ describe('bridging', function() {
     log.assert('client c1', 'server r1')
   })
 
-  it('getter throws', function() {
+  it('getter throws', function () {
     class Boom {
       get bar() {
         throw new Error('Oops!')
@@ -113,7 +113,7 @@ describe('bridging', function() {
     }
   })
 
-  it('bridgifyClass', function() {
+  it('bridgifyClass', function () {
     class SomeClass {
       foo() {}
     }
@@ -122,7 +122,7 @@ describe('bridging', function() {
     expect(local.foo).is.a('function')
   })
 
-  it('bridgifyObject', function() {
+  it('bridgifyObject', function () {
     const remote = {
       foo() {}
     }
@@ -131,7 +131,7 @@ describe('bridging', function() {
     expect(local.foo).is.a('function')
   })
 
-  it('preserves onMethod', async function() {
+  it('preserves onMethod', async function () {
     const log = makeAssertLog()
     class SomeClass {
       on: Subscriber<{ event: number }>
@@ -147,7 +147,7 @@ describe('bridging', function() {
     await log.waitFor(1).assert('got event 1')
   })
 
-  it('bridges proxies', async function() {
+  it('bridges proxies', async function () {
     const log = makeAssertLog()
     class SomeClass extends Bridgeable<{ flag: boolean }, { event: number }> {
       flag: boolean

@@ -26,13 +26,13 @@ type ObjectMagic = {
   closed?: true,
 
   // Bridges subscribed to this object:
-  bridges: Array<BridgeState>,
+  bridges: BridgeState[],
 
   // Event listeners subscribed to this object:
-  listeners: { [name: string]: Array<Function> },
+  listeners: { [name: string]: Function[] },
 
   // Property watchers subscribed to this object:
-  watchers: { [name: string]: { data: mixed, fs: Array<Function> } }
+  watchers: { [name: string]: { data: mixed, fs: Function[] } }
 }
 
 /**
