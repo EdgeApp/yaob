@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.7 (2021-05-20)
+
+- Mark method return types as `void` where appropriate. This is not a breaking change, since these YAOB methods were already returning `void` at run-time, but the types were just wrong.
+
 ## 0.3.6 (2020-01-02)
 
 - Add TypeScript type definitions.
