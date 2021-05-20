@@ -1,10 +1,11 @@
-import babel from 'rollup-plugin-babel'
+import babel from '@rollup/plugin-babel'
 import filesize from 'rollup-plugin-filesize'
 import flowEntry from 'rollup-plugin-flow-entry'
 
 import packageJson from './package.json'
 
 const babelOpts = {
+  babelHelpers: 'bundled',
   presets: [
     [
       '@babel/preset-env',
