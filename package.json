@@ -7,6 +7,9 @@
     "url": "git@github.com:Airbitz/yaob.git"
   },
   "license": "MIT",
+  "main": "lib/yaob.cjs.js",
+  "module": "lib/yaob.js",
+  "types": "src/index.d.ts",
   "files": [
     "CHANGELOG.md",
     "docs/*",
@@ -15,9 +18,6 @@
     "README.md",
     "src/*"
   ],
-  "main": "lib/yaob.cjs.js",
-  "module": "lib/yaob.js",
-  "types": "src/index.d.ts",
   "scripts": {
     "build": "rimraf lib && rollup -c",
     "build:test": "rollup -c test/rollup.config.js",
