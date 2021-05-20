@@ -11,7 +11,7 @@ export interface BridgeOptions {
  */
 export declare class Bridge {
   constructor(opts: BridgeOptions)
-  handleMessage(message: object): unknown
+  handleMessage(message: object): void
   getRoot(): Promise<any>
   sendRoot(root: object): void
   close(error: Error): void
@@ -35,7 +35,7 @@ export declare function makeLocalBridge<T>(o: T, opts?: LocalBridgeOptions): T
 /**
  * Undoes the effect of `on` or `watch`.
  */
-export type CallbackRemover = () => unknown
+export type CallbackRemover = () => void
 
 /**
  * Signature of the `on` and `watch` methods.
@@ -73,6 +73,6 @@ export declare function bridgifyClass<Type extends Function>(Class: Type): Type
 export declare function bridgifyObject<Type extends object>(o: Type): Type
 export declare function shareData(table: object, namespace?: string): void
 
-export declare function close(o: object): unknown
-export declare function emit(o: object, name: string, payload: unknown): unknown
-export declare function update<T extends object>(o: T, name?: keyof T): unknown
+export declare function close(o: object): void
+export declare function emit(o: object, name: string, payload: unknown): void
+export declare function update<T extends object>(o: T, name?: keyof T): void

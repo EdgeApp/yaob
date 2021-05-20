@@ -40,19 +40,19 @@ export class Bridge {
     )
   }
 
-  handleMessage(message: Message): mixed {
+  handleMessage(message: Message): void {
     this._state.handleMessage(message)
   }
 
-  getRoot() {
+  getRoot(): Promise<any> {
     return this._rootPromise
   }
 
-  sendRoot(root: Object) {
+  sendRoot(root: Object): void {
     this._state.emitEvent(0, 'root', root)
   }
 
-  close(error: Error) {
+  close(error: Error): void {
     this._state.close(error)
   }
 }
