@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.8 (2022-07-07)
+
+- Allow errors to contain unserializable types such as functions
+
 ## 0.3.7 (2021-05-20)
 
 - Mark method return types as `void` where appropriate. This is not a breaking change, since these YAOB methods were already returning `void` at run-time, but the types were just wrong.
