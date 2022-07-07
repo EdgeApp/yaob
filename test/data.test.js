@@ -133,6 +133,15 @@ describe('packData', function () {
     }
   })
 
+  it('allows errors to have methods', function () {
+    const error = new TypeError('kaboom')
+    // $FlowFixMe
+    error.method = function () {}
+
+    // This should not throw:
+    unpackData(emptyTable, packData(emptyTable, error), 'path')
+  })
+
   it('handles bridgeable objects', function () {
     const o1 = {}
     const o2 = {}

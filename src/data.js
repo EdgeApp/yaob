@@ -96,10 +96,11 @@ export function packThrow(table: ObjectTable, data: mixed): PackedData {
 export function unpackData(
   table: ObjectTable,
   data: PackedData,
-  path: string
+  path: string,
+  supress: boolean = false
 ): any {
   const { map, raw } = data
-  const out = map != null ? unpackItem(table, map, raw, path) : raw
+  const out = map != null ? unpackItem(table, map, raw, path, supress) : raw
   if (data.throw) throw out
   return out
 }
@@ -259,7 +260,7 @@ function unpackError(
   const out: Object = new Base()
 
   // Restore the properties:
-  const props = unpackData(table, value, path)
+  const props = unpackData(table, value, path, true)
   for (const n in props) out[n] = props[n]
 
   return out
@@ -272,7 +273,8 @@ function unpackItem(
   table: ObjectTable,
   map: DataMap,
   raw: any,
-  path: string
+  path: string,
+  supress: boolean
 ): any {
   switch (map) {
     case '':
@@ -343,7 +345,8 @@ function unpackItem(
         }
         const out = []
         for (let i = 0; i < map.length; ++i) {
-          out[i] = unpackItem(table, map[i], raw[i], `${path}[${i}]`)
+          if (supress === true && map[i] === '?') continue
+          out[i] = unpackItem(table, map[i], raw[i], `${path}[${i}]`, supress)
         }
         return out
       }
@@ -351,8 +354,11 @@ function unpackItem(
       // Objects:
       const out = {}
       for (const n in raw) {
+        if (supress === true && map[n] === '?') continue
         out[n] =
-          n in map ? unpackItem(table, map[n], raw[n], `${path}.${n}`) : raw[n]
+          n in map
+            ? unpackItem(table, map[n], raw[n], `${path}.${n}`, supress)
+            : raw[n]
       }
       return out
     }
