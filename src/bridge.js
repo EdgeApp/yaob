@@ -15,6 +15,7 @@ export type SendMessage = (message: Object) => mixed
  */
 export type BridgeOptions = {
   sendMessage: SendMessage,
+  hideProperties?: string[],
   throttleMs?: number
 }
 
@@ -23,6 +24,7 @@ export type BridgeOptions = {
  */
 export type LocalBridgeOptions = {
   cloneMessage?: (x: Object) => Object,
+  hideProperties?: string[],
   throttleMs?: number
 }
 
@@ -66,18 +68,20 @@ export function makeLocalBridge<T>(o: T, opts: LocalBridgeOptions = {}): T {
   function nopClone(m: Object): Object {
     return m
   }
-  const { cloneMessage = nopClone, throttleMs } = opts
+  const { cloneMessage = nopClone, hideProperties, throttleMs } = opts
 
   const serverState = new BridgeState({
     sendMessage(message) {
       clientState.handleMessage(cloneMessage(message))
     },
+    hideProperties,
     throttleMs
   })
   const clientState = new BridgeState({
     sendMessage(message) {
       serverState.handleMessage(cloneMessage(message))
     },
+    hideProperties,
     throttleMs
   })
 
