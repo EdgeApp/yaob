@@ -289,6 +289,26 @@ bridgifyClass(SomeApi)
 
 The `onMethod` and `watchMethod` values are shared, so the bridge knows to replace them with a proper client-side methods instead of bridging them.
 
+### Hiding Properties
+
+By default, yaob uses the JavaScript `enumerable` flag to hide bridged methods. This way, if you pass a bridged object to `console.log` or `JSON.stringify`, you will just see the values, not the methods.
+
+If you want to hide additional properties, you can pass their names in a `hideProperites` bridge option. Yaob will hide any bridgeable object properties with names that match the list.
+
+In this example, yaob automatically hides `someMethod`, since it's a method, and also hides the `hideMe` property because it's name is on the list:
+
+```js
+const example = bridgifyObject({
+  visible: 1,
+  hideMe: 2,
+  someMethod () {}
+})
+
+const local = makeLocalBridge(example, { hideProperties: ["hideMe"] })
+
+JSON.stringify(local) // Returns {"visible":1}
+```
+
 ### Flow Types
 
 This library ships with Flow types. For information on using them, please see the [Flow tutorial](./docs/flow.md).

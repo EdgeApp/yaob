@@ -23,6 +23,11 @@ import type {
 } from './protocol.js'
 
 export class BridgeState implements ObjectTable {
+  // Options:
+  +hideProperties: string[]
+  +sendMessage: SendMessage
+  +throttleMs: number
+
   // Objects:
   +proxies: { [objectId: number]: Object }
   +objects: { [localId: number]: Object }
@@ -40,13 +45,16 @@ export class BridgeState implements ObjectTable {
 
   // Update scheduling:
   closed: boolean
-  +throttleMs: number
   lastUpdate: number
   sendPending: boolean
-  +sendMessage: SendMessage
 
   constructor(opts: BridgeOptions) {
-    const { sendMessage, throttleMs = 0 } = opts
+    const { hideProperties = [], sendMessage, throttleMs = 0 } = opts
+
+    // Options:
+    this.hideProperties = hideProperties
+    this.sendMessage = sendMessage
+    this.throttleMs = throttleMs
 
     // Objects:
     this.proxies = {}
@@ -62,10 +70,8 @@ export class BridgeState implements ObjectTable {
     this.message = {}
 
     // Update scheduling:
-    this.throttleMs = throttleMs
     this.lastUpdate = 0
     this.sendPending = false
-    this.sendMessage = sendMessage
   }
 
   /**

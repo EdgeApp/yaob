@@ -180,4 +180,17 @@ describe('bridging', function () {
     log.assert('got flag true')
     expect(local.flag).equals(true)
   })
+
+  it('hides requested properties', async function () {
+    const remote = bridgifyObject({
+      a: 1,
+      b: 2
+    })
+
+    const local = makeLocalBridge(remote, { hideProperties: ['b'] })
+    expect(local.a).equals(1)
+    expect(local.b).equals(2)
+    expect(Object.keys(local)).deep.equals(['a'])
+    expect(JSON.stringify(local)).equals('{"a":1}')
+  })
 })
