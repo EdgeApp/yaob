@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.9 (2023-01-17)
+
+- added: Accept a `hideProperties` configuration option to make certain properties non-enumerable.
+
 ## 0.3.8 (2022-07-07)
 
 - Allow errors to contain unserializable types such as functions
