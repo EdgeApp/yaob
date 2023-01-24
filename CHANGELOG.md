@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.10 (2023-01-24)
+
+- fixed: Add missing `hideProperties` to the TypeScript types.
+
 ## 0.3.9 (2023-01-17)
 
 - added: Accept a `hideProperties` configuration option to make certain properties non-enumerable.
