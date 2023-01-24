@@ -3,6 +3,7 @@
  */
 export interface BridgeOptions {
   sendMessage: (message: object) => unknown
+  hideProperties?: string[]
   throttleMs?: number
 }
 
@@ -22,6 +23,7 @@ export declare class Bridge {
  */
 export interface LocalBridgeOptions {
   cloneMessage?: (x: object) => object
+  hideProperties?: string[]
   throttleMs?: number
 }
 
