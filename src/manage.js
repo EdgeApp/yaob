@@ -146,13 +146,13 @@ export function callCallback(
   f: Function,
   payload: mixed,
   emitError: boolean
-) {
+): void {
   try {
     const out = f(payload)
 
     // If the function returns a promise, emit an error if it rejects:
     if (emitError && out != null && typeof out.then === 'function') {
-      out.then(undefined, e => emit(o, 'error', e))
+      out.then(undefined, (e: any) => emit(o, 'error', e))
     }
   } catch (e) {
     if (emitError) emit(o, 'error', e)

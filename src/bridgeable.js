@@ -29,7 +29,7 @@ export class Bridgeable<Props: {} = {}, Events: {} = {}> {
   +on: Subscriber<Events>
   +watch: Subscriber<Props>
 
-  _close() {
+  _close(): void {
     close(this)
   }
 
@@ -40,7 +40,7 @@ export class Bridgeable<Props: {} = {}, Events: {} = {}> {
     return emit(this, name, payload)
   }
 
-  _update(name?: $Keys<Props>) {
+  _update(name?: $Keys<Props>): void {
     update(this, name)
   }
 }

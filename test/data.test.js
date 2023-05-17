@@ -23,11 +23,11 @@ class MockTable implements ObjectTable {
     this.proxies = []
   }
 
-  getObject(packedId: number) {
+  getObject(packedId: number): Object | void {
     return packedId < 0 ? this.proxies[-packedId] : this.objects[packedId]
   }
 
-  getPackedId(o: Object) {
+  getPackedId(o: Object): number | null {
     const magic = o[MAGIC_KEY]
     if (magic == null) throw new TypeError('Not a bridgeable object')
     if (magic.closed) return null
@@ -90,7 +90,7 @@ describe('packData', function () {
 
     // Complex error:
     function PayloadError(payload: Object, message: string): Error {
-      const e: Object = new Error(message)
+      const e: any = new Error(message)
       e.payload = payload
       e.name = 'PayloadError'
       return e

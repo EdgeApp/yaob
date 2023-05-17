@@ -157,7 +157,7 @@ function makeProxyGetter(magic: ProxyMagic, name: string) {
 }
 
 function makeProxyMethod(state: BridgeState, magic: ProxyMagic, name: string) {
-  return function method(...args) {
+  return function method(...args: any[]): Promise<mixed> {
     if (magic.closed) {
       return Promise.reject(
         new TypeError(`Cannot call method '${name}' of closed proxy`)
