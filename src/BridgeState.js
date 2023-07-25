@@ -337,7 +337,16 @@ export class BridgeState implements ObjectTable {
     const message = this.message
     this.dirty = {}
     this.message = {}
-    this.sendMessage(message)
+    if (
+      message.calls != null ||
+      message.changed != null ||
+      message.closed != null ||
+      message.created != null ||
+      message.events != null ||
+      message.returns != null
+    ) {
+      this.sendMessage(message)
+    }
   }
 
   /**
