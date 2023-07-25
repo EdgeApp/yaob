@@ -5,7 +5,7 @@
  * This file contains routines for working with these magic properties.
  */
 
-import type { BridgeState } from './state.js'
+import type { BridgeState } from './BridgeState.js'
 
 // An object is bridgeable if it has this key:
 export const MAGIC_KEY = '_yaob'

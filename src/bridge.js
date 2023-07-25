@@ -1,9 +1,9 @@
 // @flow
 
+import { BridgeState } from './BridgeState.js'
 import { packData, unpackData } from './data.js'
 import { addListener } from './manage.js'
 import { type Message } from './protocol.js'
-import { BridgeState } from './state.js'
 
 /**
  * The bridge sends messages using this function.

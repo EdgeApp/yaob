@@ -5,6 +5,7 @@
  * and then restoring those messages into proxies on the other side.
  */
 
+import type { BridgeState } from './BridgeState.js'
 import { packData, packThrow, unpackData } from './data.js'
 import {
   type ProxyMagic,
@@ -13,7 +14,6 @@ import {
   makeProxyMagic
 } from './magic.js'
 import type { CreateMessage, PackedProps } from './protocol.js'
-import type { BridgeState } from './state.js'
 
 export type ValueCache = { [name: string]: mixed }
 
