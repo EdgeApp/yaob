@@ -9,15 +9,15 @@ import { expectRejection } from './utils/expect-rejection.js'
 import { makeLoggedBridge } from './utils/logged-bridge.js'
 
 class ChildApi extends Bridgeable<ChildApi, { close: void }> {
-  get answer() {
+  get answer(): number {
     return 42
   }
 
-  async asyncMethod(x: number) {
+  async asyncMethod(x: number): Promise<number> {
     return x * 3
   }
 
-  syncMethod(x: number) {
+  syncMethod(x: number): number {
     return x * 2
   }
 }
@@ -26,12 +26,12 @@ shareData({
   'ChildApi.syncMethod': ChildApi.prototype.syncMethod
 })
 
-class ParentApi extends Bridgeable<> {
-  async makeChild() {
+class ParentApi extends Bridgeable<ParentApi> {
+  async makeChild(): Promise<ChildApi> {
     return new ChildApi()
   }
 
-  async closeChild(child: ChildApi) {
+  async closeChild(child: ChildApi): Promise<void> {
     close(child)
   }
 }

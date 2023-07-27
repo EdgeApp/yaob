@@ -5,7 +5,7 @@
  * This file contains routines for working with these magic properties.
  */
 
-import type { BridgeState } from './state.js'
+import type { BridgeState } from './BridgeState.js'
 
 // An object is bridgeable if it has this key:
 export const MAGIC_KEY = '_yaob'
@@ -69,7 +69,10 @@ export const sharedData: { [sharedId: string]: mixed } = {}
 /**
  * Adds or updates an object's magic data.
  */
-function addMagic(o: Object, magic: ClassMagic | ObjectMagic | SharedMagic) {
+function addMagic(
+  o: Object,
+  magic: ClassMagic | ObjectMagic | SharedMagic
+): void {
   if (Object.prototype.hasOwnProperty.call(o, MAGIC_KEY)) {
     Object.assign(o[MAGIC_KEY], magic)
   } else {
@@ -142,7 +145,7 @@ export function makeProxyMagic(remoteId: number): ProxyMagic {
 export function shareData(
   table: { [name: string]: Object },
   namespace?: string
-) {
+): void {
   if (namespace == null) namespace = ''
   else namespace += '.'
 

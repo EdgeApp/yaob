@@ -79,7 +79,7 @@ export class BridgeState implements ObjectTable {
    * This also closes all proxies created by the bridge and rejects
    * all pending calls.
    */
-  close(error: Error) {
+  close(error: Error): void {
     for (const callId in this.pendingCalls) {
       const call = this.pendingCalls[Number(callId)]
       call.reject(error)
@@ -337,7 +337,16 @@ export class BridgeState implements ObjectTable {
     const message = this.message
     this.dirty = {}
     this.message = {}
-    this.sendMessage(message)
+    if (
+      message.calls != null ||
+      message.changed != null ||
+      message.closed != null ||
+      message.created != null ||
+      message.events != null ||
+      message.returns != null
+    ) {
+      this.sendMessage(message)
+    }
   }
 
   /**
@@ -347,7 +356,7 @@ export class BridgeState implements ObjectTable {
     if (this.sendPending) return
 
     this.sendPending = true
-    const task = () => {
+    const task = (): void => {
       this.sendPending = false
       this.lastUpdate = Date.now()
       this.sendNow()

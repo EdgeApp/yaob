@@ -19,11 +19,11 @@ import { makeLoggedBridge } from './utils/logged-bridge.js'
 describe('bridging', function () {
   it('maintains object identity', async function () {
     const log = makeAssertLog()
-    class ChildApi extends Bridgeable<> {}
+    class ChildApi extends Bridgeable<ChildApi> {}
     const remoteChild = new ChildApi()
 
-    class ParentApi extends Bridgeable<> {
-      get children() {
+    class ParentApi extends Bridgeable<ParentApi> {
+      get children(): ChildApi[] {
         return [remoteChild, remoteChild]
       }
     }
@@ -39,8 +39,8 @@ describe('bridging', function () {
 
   it('handles recursive objects', async function () {
     const log = makeAssertLog()
-    class LoopyApi extends Bridgeable<> {
-      get self() {
+    class LoopyApi extends Bridgeable<LoopyApi> {
+      get self(): LoopyApi {
         return this
       }
     }
@@ -63,8 +63,8 @@ describe('bridging', function () {
         this._prop = 2
       }
 
-      method() {}
-      _method() {}
+      method(): void {}
+      _method(): void {}
     }
     const local = makeLocalBridge(new SomeClass())
     expect(local.method).is.a('function')
@@ -75,12 +75,12 @@ describe('bridging', function () {
 
   it('calls methods', async function () {
     const log = makeAssertLog()
-    class MethodApi extends Bridgeable<> {
-      simple(x: number) {
+    class MethodApi extends Bridgeable<MethodApi> {
+      simple(x: number): number {
         return x * 2
       }
 
-      throws() {
+      throws(): Promise<void> {
         throw new Error('I will never be happy')
       }
     }
@@ -98,7 +98,7 @@ describe('bridging', function () {
 
   it('getter throws', function () {
     class Boom {
-      get bar() {
+      get bar(): string {
         throw new Error('Oops!')
       }
     }
@@ -115,7 +115,7 @@ describe('bridging', function () {
 
   it('bridgifyClass', function () {
     class SomeClass {
-      foo() {}
+      foo(): void {}
     }
     bridgifyClass(SomeClass)
     const local = makeLocalBridge(new SomeClass())
@@ -124,7 +124,7 @@ describe('bridging', function () {
 
   it('bridgifyObject', function () {
     const remote = {
-      foo() {}
+      foo(): void {}
     }
     bridgifyObject(remote)
     const local = makeLocalBridge(remote)
@@ -157,7 +157,7 @@ describe('bridging', function () {
         this.flag = false
       }
 
-      foo() {
+      foo(): string {
         this.flag = true
         this._update()
         return 'bar'

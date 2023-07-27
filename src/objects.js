@@ -5,6 +5,7 @@
  * and then restoring those messages into proxies on the other side.
  */
 
+import type { BridgeState } from './BridgeState.js'
 import { packData, packThrow, unpackData } from './data.js'
 import {
   type ProxyMagic,
@@ -13,7 +14,6 @@ import {
   makeProxyMagic
 } from './magic.js'
 import type { CreateMessage, PackedProps } from './protocol.js'
-import type { BridgeState } from './state.js'
 
 export type ValueCache = { [name: string]: mixed }
 
@@ -157,7 +157,7 @@ function makeProxyGetter(magic: ProxyMagic, name: string) {
 }
 
 function makeProxyMethod(state: BridgeState, magic: ProxyMagic, name: string) {
-  return function method(...args) {
+  return function method(...args: any[]): Promise<mixed> {
     if (magic.closed) {
       return Promise.reject(
         new TypeError(`Cannot call method '${name}' of closed proxy`)
