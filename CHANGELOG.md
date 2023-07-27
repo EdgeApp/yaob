@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.11 (2023-07-27)
+
+- fixed: Do not send blank messages over the bridge.
+
 ## 0.3.10 (2023-01-24)
 
 - fixed: Add missing `hideProperties` to the TypeScript types.
