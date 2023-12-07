@@ -38,12 +38,20 @@ class MockTable implements ObjectTable {
 
 const emptyTable = new MockTable()
 
+// Common test data:
+const u8array = Uint8Array.from([1, 2, 3, 4])
+const arrayBuffer = u8array.buffer
+const map = new Map([
+  [null, 1],
+  [2, 2],
+  ['s', 3]
+])
+const set = new Set([null, 2, 's'])
+
 describe('packData', function () {
   it('handles simple types', function () {
     const sparseArray = []
     sparseArray[2] = 2
-    const u8array = Uint8Array.from([1, 2, 3, 4])
-    const arrayBuffer = u8array.buffer
 
     const cases: Array<[mixed, PackedData]> = [
       // Primitives:
@@ -62,6 +70,22 @@ describe('packData', function () {
       [sparseArray, { map: ['u', 'u', ''], raw: [null, null, 2] }],
       [arrayBuffer, { map: 'ab', raw: 'AQIDBA==' }],
       [u8array, { map: 'u8', raw: 'AQIDBA==' }],
+
+      // Maps & sets:
+      [
+        map,
+        {
+          map: 'M',
+          raw: {
+            raw: [
+              [null, 1],
+              [2, 2],
+              ['s', 3]
+            ]
+          }
+        }
+      ],
+      [set, { map: 'S', raw: { raw: [null, 2, 's'] } }],
 
       // Objects:
       [{ x: 1, y: 2 }, { raw: { x: 1, y: 2 } }],
@@ -165,9 +189,6 @@ describe('packData', function () {
 
 describe('unpackData', function () {
   it('restores simple types', function () {
-    const u8array = Uint8Array.from([1, 2, 3, 4])
-    const arrayBuffer = u8array.buffer
-
     const cases: Array<[mixed, PackedData]> = [
       // Primitives:
       [false, { raw: false }],
@@ -184,6 +205,22 @@ describe('unpackData', function () {
       [[undefined, 2], { map: ['u', ''], raw: [null, 2] }],
       [arrayBuffer, { map: 'ab', raw: 'AQIDBA==' }],
       [u8array, { map: 'u8', raw: 'AQIDBA==' }],
+
+      // Maps & sets:
+      [
+        map,
+        {
+          map: 'M',
+          raw: {
+            raw: [
+              [null, 1],
+              [2, 2],
+              ['s', 3]
+            ]
+          }
+        }
+      ],
+      [set, { map: 'S', raw: { raw: [null, 2, 's'] } }],
 
       // Objects:
       [{ x: 1, y: 2 }, { raw: { x: 1, y: 2 } }],

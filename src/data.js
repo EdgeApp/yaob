@@ -31,11 +31,13 @@ export type DataMap =
   | '?' // Invalid value
   | 'd' // Date
   | 'e' // Error
-  | 'o' // Object
-  | 's' // Shared data
+  | 'o' // Bridged object
+  | 's' // Global shared object
   | 'u' // Undefined
   | 'ab' // ArrayBuffer
   | 'u8' // Uint8Array
+  | 'M' // Map
+  | 'S' // Set
 
 /**
  * A pure JSON value type.
@@ -122,6 +124,8 @@ function mapData(table: ObjectTable, data: mixed): DataMap {
       if (data instanceof Error) return 'e'
       if (data instanceof ArrayBuffer) return 'ab'
       if (data instanceof Uint8Array) return 'u8'
+      if (data instanceof Map) return 'M'
+      if (data instanceof Set) return 'S'
       if (data[MAGIC_KEY] != null) {
         return data[MAGIC_KEY].shareId != null ? 's' : 'o'
       }
@@ -217,6 +221,14 @@ function packItem(table: ObjectTable, map: DataMap, data: any): JsonValue {
 
     case 'u8':
       return base64.stringify(data)
+
+    case 'M':
+      // $FlowFixMe - Flow is incorrect. This is fine.
+      return packData(table, Array.from(data.entries()))
+
+    case 'S':
+      // $FlowFixMe - Flow is incorrect. This is fine.
+      return packData(table, Array.from(data.values()))
 
     default: {
       // Arrays:
@@ -329,6 +341,20 @@ function unpackItem(
         throw new TypeError(`Expecting a base64 string at ${path}`)
       }
       return base64.parse(raw)
+
+    case 'M': {
+      if (typeof raw !== 'object' || raw === null) {
+        throw new TypeError(`Expecting an Map description at ${path}`)
+      }
+      return new Map(unpackData(table, raw, path))
+    }
+
+    case 'S': {
+      if (typeof raw !== 'object' || raw === null) {
+        throw new TypeError(`Expecting an Set description at ${path}`)
+      }
+      return new Set(unpackData(table, raw, path))
+    }
 
     default: {
       if (typeof map !== 'object' || map === null) {

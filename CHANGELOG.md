@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- added: Support the JavaScript `Set` and `Map` types in serialized data.
+
 ## 0.3.11 (2023-07-27)
 
 - fixed: Do not send blank messages over the bridge.
