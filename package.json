@@ -64,7 +64,7 @@
     "mocha": "^8.4.0",
     "prettier": "^2.2.0",
     "rimraf": "^3.0.2",
-    "rollup": "^2.48.0",
+    "rollup": "^2.80.0",
     "rollup-plugin-filesize": "^9.1.1",
     "rollup-plugin-flow-entry": "^0.3.5",
     "source-map-support": "^0.5.19",
