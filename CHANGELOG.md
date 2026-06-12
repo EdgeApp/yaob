@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- changed: Convert the build tooling from Yarn to npm.
+- security: Upgrade dependencies per Socket security recommendations.
+
 ## 0.3.12 (2023-12-11)
 
 - added: Support the JavaScript `Set` and `Map` types in serialized data.
